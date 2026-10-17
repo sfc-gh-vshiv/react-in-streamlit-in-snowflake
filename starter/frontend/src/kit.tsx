@@ -96,9 +96,21 @@ function bridgeInput(): HTMLInputElement | null {
 
 function assets(): Record<string, string> { return { ...(W.__slAssets || {}) }; }
 
-function write(r: Inflight) {
+function scriptRunning() {
+  const s = (document.querySelector('[data-testid="stApp"]') as HTMLElement | null)?.dataset.testScriptState;
+  return s === "running" || s === "rerunRequested";
+}
+
+function write(r: Inflight, waited = 0) {
   const input = bridgeInput();
   if (!input) return;                   // not rendered yet: the watchdog retries
+  // A value written while a run is in progress can be lost (the watchdog exists for
+  // that case), so wait, up to a few seconds, for Streamlit to finish the current run.
+  if (scriptRunning() && waited < 3000) {
+    setTimeout(() => { if (Q.inflight === r) write(r, waited + 50); }, 50);
+    return;
+  }
+  r.t = Date.now();
   const msg = { v: 1, id: r.id, action: r.action, payload: r.payload, try: r.tries, ack: Q.ack.slice(0, 200), assets: assets() };
   Q.reported = JSON.stringify(msg.assets);
   // Set the value the way a user edit would, so Streamlit's input sees a change.
@@ -106,8 +118,13 @@ function write(r: Inflight) {
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
   setter.call(input, JSON.stringify(msg));
   input.dispatchEvent(new Event("input", { bubbles: true }));
-  for (const t of ["keydown", "keypress", "keyup"])
-    input.dispatchEvent(new KeyboardEvent(t, { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+  // Streamlit's input commits on Enter by comparing against its own React state, which
+  // React applies after this task. Sent in the same task, Enter sees no change and the
+  // request sits unsent until the watchdog retries. A real user's Enter is a later task too.
+  setTimeout(() => {
+    for (const t of ["keydown", "keypress", "keyup"])
+      input.dispatchEvent(new KeyboardEvent(t, { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true }));
+  }, 0);
 }
 
 /** Tell Python which bundle and data assets this page holds, so later reruns can skip them. */
