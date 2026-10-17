@@ -1,0 +1,8 @@
+# Container runtime dependencies (installed with uv). Pinned versions need an
+# artifact repository attached to the app, which deploy.sh --container does:
+#   ARTIFACT_REPOSITORIES = (snowflake.snowpark.pypi_shared_repository)
+[project]
+name = "instant-bi-native-twin"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = ["streamlit[snowflake]==1.52.2"]

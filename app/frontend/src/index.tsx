@@ -48,21 +48,10 @@ const money = (v: number) => "$" + (v >= 1e9 ? (v / 1e9).toFixed(1) + "B" : v >=
 const pct = (v: number) => v.toFixed(1) + "%";
 
 // ------------------------------------------------------------------ filter state
-// Lives on the persistent store, so it survives reruns. An initial state can come from
-// the URL (?region=EUROPE&first=12&last=35), which the tests use to compare with the twin.
-function initialFilters(c: Cube): Filters {
-  const f = allMonths(c);
-  const q = new URLSearchParams(W.location?.search || "");
-  for (const d of DIMS) if (q.get(d)) (f as Any)[d] = q.get(d);
-  const n = (k: string, dflt: number) => (q.get(k) != null && !isNaN(+q.get(k)!) ? Math.max(0, Math.min(c.months.length - 1, +q.get(k)!)) : dflt);
-  f.first = n("first", f.first);
-  f.last = Math.max(f.first, n("last", f.last));
-  return f;
-}
-
+// Lives on the persistent store, so it survives reruns.
 function useFilters(c: Cube): [Filters, (f: Filters) => void] {
   const s = useStore();
-  if (!s.filters) s.filters = initialFilters(c);
+  if (!s.filters) s.filters = allMonths(c);
   const update = (f: Filters) => {
     markInput(CHART_NAMES, (ms) => setStore({ latency: ms }));
     setStore({ filters: f });
