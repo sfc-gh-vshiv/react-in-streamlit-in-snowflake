@@ -105,13 +105,14 @@ function scriptRunning() {
 
 function write(r: Inflight, waited = 0) {
   const input = bridgeInput();
-  if (!input) return;                   // not rendered yet: the watchdog retries
-  // A value written while a run is in progress can be lost (the watchdog exists for
-  // that case), so wait, up to a few seconds, for Streamlit to finish the current run.
-  if (scriptRunning() && waited < 3000) {
+  // The input may not be on the page yet (first load), and a value written while a run
+  // is in progress can be lost (the watchdog exists for that case). Either way, wait a
+  // little, up to a few seconds, instead of leaving it to the 6 s watchdog.
+  if ((!input || scriptRunning()) && waited < 3000) {
     setTimeout(() => { if (Q.inflight === r) write(r, waited + 50); }, 50);
     return;
   }
+  if (!input) return;                   // still missing: the watchdog retries
   r.t = Date.now();
   const msg = { v: 1, id: r.id, action: r.action, payload: r.payload, try: r.tries, ack: Q.ack.slice(0, 200), assets: assets() };
   Q.reported = JSON.stringify(msg.assets);
@@ -205,7 +206,8 @@ export function defineIslands(islands: Record<string, Island>, css: string, vers
   function mount(slot: Host, name: string, props: Any) {
     adopt();
     injectCss(css);
-    bridgeInput();
+    // Keep the hidden input out of the tab order as soon as Streamlit has rendered it.
+    if (!bridgeInput()) for (let i = 1; i <= 20; i++) setTimeout(bridgeInput, 100 * i);
     const C = Object.prototype.hasOwnProperty.call(islands, name) ? islands[name] : null;
     if (!C) { slot.textContent = "Unknown island: " + name; return; }
     let el: Host = slot;
