@@ -17,7 +17,7 @@ const BANNED = [
   [/insertAdjacentHTML/, "insertAdjacentHTML"],
   [/document\.write/, "document.write"],
   [/\beval\s*\(|new\s+Function\s*\(/, "eval / new Function"],
-  [/\bfetch\s*\(|XMLHttpRequest|WebSocket\s*\(|import\s*\(\s*["'`]https?:/, "network call (the SiS page CSP blocks them anyway)"],
+  [/\bfetch\s*\(|XMLHttpRequest|WebSocket\s*\(|import\s*\(\s*["'`]https?:/, "network call (keep the bundle self-contained; Snowflake is reached through Python)"],
 ];
 
 test("H6: the React source has no raw-HTML sinks, eval or network calls", () => {

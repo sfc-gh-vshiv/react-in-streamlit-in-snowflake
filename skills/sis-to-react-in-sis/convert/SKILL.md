@@ -46,8 +46,8 @@ React (`frontend/src/index.tsx`; plumbing in `kit.tsx`):
 - `job(key, () => send(action, payload))` returns `{loading, result, error}` and polls
   pending jobs. Call it only in the component that shows the result.
 - Read session data with `data(name)`.
-- No raw-HTML sinks, no `eval`, no network calls (the page CSP blocks them anyway);
-  `npm test` checks.
+- No raw-HTML sinks, no `eval` (the page's content security policy blocks it), and no
+  network calls (the app reaches Snowflake through Python); `npm test` checks.
 
 After each phase: `npm run build`, `npm test`, `python -m pytest tests`, and
 `APP_URL=http://localhost:8501 npm run smoke`.
