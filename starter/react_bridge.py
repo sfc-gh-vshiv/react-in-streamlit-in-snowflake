@@ -55,6 +55,7 @@ _MAX_RESPONSES = 16                 # answered, not yet acknowledged by the brow
 _RESPONSE_BUDGET = 2_000_000        # bytes of JSON re-sent on each rerun until acknowledged
 _MAX_RESULTS = 32                   # finished background jobs kept per session
 _RESULT_TTL = 3600
+_FAST_WAIT = 0.4                    # seconds to wait for a query before answering "pending"
 
 
 class BadRequest(ValueError):
@@ -358,8 +359,14 @@ def _run_job(token: str, spec) -> dict:
         jobs[token] = (session, query_id, post, now)
     session, query_id, post, started = jobs[token]
     job = session.create_async_job(query_id)
+    # Many queries finish in well under a second (Snowflake's result cache, small tables).
+    # A short wait answers those in this run; a poll would cost another rerun.
+    for _ in range(round(_FAST_WAIT / 0.05)):
+        if job.is_done():
+            break
+        time.sleep(0.05)
     if not job.is_done():
-        return {"pending": True, "token": token, "elapsed": round(now - started)}
+        return {"pending": True, "token": token, "elapsed": round(time.time() - started)}
     try:
         result = post(job.result("pandas"))
     finally:

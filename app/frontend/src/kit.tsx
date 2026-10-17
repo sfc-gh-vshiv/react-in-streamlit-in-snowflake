@@ -150,9 +150,10 @@ function lost(id: string) {
 
 /** Start once per key; poll pending results. Call it only in the component that shows
  *  the result, so slow work starts when that view opens. If the answer has gone missing
- *  (trimmed from both caches), it asks again instead of waiting forever. Each poll is a
- *  Streamlit rerun, so the interval backs off (1.5 s, 2.5 s, ... up to 5 s). */
-export function job<T = Any>(key: string, start: () => string, poll = 1500): Job<T> {
+ *  (trimmed from both caches), it asks again instead of waiting forever. Python already
+ *  waits briefly for fast queries, so "pending" means a slow one. Each poll is a Streamlit
+ *  rerun, so the interval backs off (0.75 s, 1.25 s, ... up to 4 s). */
+export function job<T = Any>(key: string, start: () => string, poll = 750): Job<T> {
   const map = store.jobs;
   if (!map[key] || lost(map[key])) map[key] = start();
   const id = map[key];
@@ -165,7 +166,7 @@ export function job<T = Any>(key: string, start: () => string, poll = 1500): Job
       const n = (Q.backoff[key] = (Q.backoff[key] || 0) + 1);
       setTimeout(() => {
         if (map[key] === id) { map[key] = send("poll", { token: r.result.token }); notify(); }
-      }, Math.min(5000, poll + 1000 * (n - 1)));
+      }, Math.min(4000, poll + 500 * (n - 1)));
     }
     return { loading: true, result: null, error: null, elapsed: r.result.elapsed };
   }

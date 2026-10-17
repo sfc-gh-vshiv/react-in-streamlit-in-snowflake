@@ -1,0 +1,7 @@
+{
+  "name": "instant-bi-bench",
+  "private": true,
+  "type": "module",
+  "scripts": { "bench": "node bench.mjs" },
+  "devDependencies": { "playwright-core": "1.64.0" }
+}

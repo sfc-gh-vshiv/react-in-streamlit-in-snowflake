@@ -24,7 +24,6 @@ import tpch
 st.set_page_config(page_title="Instant BI · native Streamlit", layout="wide")
 st.session_state.setdefault("full_runs", 0)
 st.session_state.setdefault("fragment_runs", 0)
-st.session_state.setdefault("reset", 0)
 st.session_state["full_runs"] += 1
 
 BLUE, NAVY, MUTED = "#29B5E8", "#11567F", "#94a3b8"
@@ -83,34 +82,59 @@ def bar_chart(totals: dict, dim: str, order: list[str] | None, height: int, rota
             .properties(usermeta=SVG))
 
 
-def current_filters(k: int) -> tpch.Filters:
-    """Filters from the charts' own selection state, read before anything is drawn,
-    so one fragment run per interaction renders the new state."""
+DIMS = ("region", "nation", "segment", "priority")
+
+
+def current_filters() -> tpch.Filters:
+    """The filters, kept in session state. A chart's selection is treated as a click
+    event: Streamlit re-creates a chart (and empties its selection) whenever its data
+    changes, so an empty selection does not clear a filter. Chips and "Clear all" do,
+    by giving the chart a new key. Read before anything is drawn, so one fragment run
+    per interaction renders the new state."""
+    f, gen, seen = st.session_state["f"], st.session_state["gen"], st.session_state["seen"]
+
     def selection(key):
         return ((st.session_state.get(key) or {}).get("selection") or {})
+    for dim in DIMS:
+        rows = selection(f"{dim}_{gen[dim]}").get(dim) or []
+        value = rows[0].get(dim) if rows else None
+        if value is not None and value != seen.get(dim):
+            f[dim] = value
+            if dim == "region" and f["nation"] and REGION_OF[f["nation"]] != value:
+                f["nation"] = None                     # a nation belongs to a region
+        seen[dim] = value
+    months = (selection(f"months_{gen['months']}").get("months") or {}).get("month") or []
+    if months and months != seen.get("months"):
+        f["first"], f["last"] = LABELS.index(min(months)), LABELS.index(max(months))
+    seen["months"] = months
+    return tpch.Filters(**f)
 
-    def pick(dim):
-        rows = selection(f"{dim}_{k}").get(dim) or []
-        return rows[0].get(dim) if rows else None
-    months = (selection(f"months_{k}").get("months") or {}).get("month") or []
-    first, last = (LABELS.index(min(months)), LABELS.index(max(months))) if months else (0, tpch.MONTHS - 1)
-    region, nation = pick("region"), pick("nation")
-    if nation and region and REGION_OF[nation] != region:
-        nation = None                                  # a nation belongs to a region
-    return tpch.Filters(first, last, region, nation, pick("segment"), pick("priority"))
+
+def clear(*dims: str) -> None:
+    f, gen, seen = st.session_state["f"], st.session_state["gen"], st.session_state["seen"]
+    for dim in dims:
+        if dim == "months":
+            f["first"], f["last"] = 0, tpch.MONTHS - 1
+        else:
+            f[dim] = None
+        gen[dim] += 1                                  # a fresh chart, with no selection
+        seen.pop(dim, None)
 
 
 c = cube()
 df = cube_frame(c["version"])
 LABELS = [tpch.month_label(i) for i in range(tpch.MONTHS)]
 REGION_OF = {n["nation"]: n["region"] for n in c["nations"]}
+st.session_state.setdefault("f", {"first": 0, "last": tpch.MONTHS - 1, **{d: None for d in DIMS}})
+st.session_state.setdefault("gen", {d: 0 for d in ("months", *DIMS)})
+st.session_state.setdefault("seen", {})
 
 
 @st.fragment
 def dashboard():
     st.session_state["fragment_runs"] += 1
-    k = st.session_state["reset"]                     # new chart keys clear their selections
-    f = current_filters(k)
+    f = current_filters()
+    gen = st.session_state["gen"]
     res = frame.aggregate(df, f)
 
     top = st.container(horizontal=True, vertical_alignment="bottom")
@@ -119,24 +143,25 @@ def dashboard():
     top.caption(f"Reruns: full {st.session_state['full_runs']} · fragment {st.session_state['fragment_runs']}")
 
     chips = st.container(horizontal=True, vertical_alignment="center")
-    active = ([f"{tpch.month_label(f.first)} to {tpch.month_label(f.last)}"] if (f.first, f.last) != (0, tpch.MONTHS - 1) else [])
-    active += [f"{d.title()}: {getattr(f, d)}" for d in ("region", "nation", "segment", "priority") if getattr(f, d)]
-    for label in active:
-        chips.badge(label, color="blue")
-    if active and chips.button("Clear all", type="tertiary", key="clear"):
-        st.session_state["reset"] += 1
-        st.rerun(scope="fragment")
+    active = ([("months", f"{tpch.month_label(f.first)} to {tpch.month_label(f.last)}")]
+              if (f.first, f.last) != (0, tpch.MONTHS - 1) else [])
+    active += [(d, f"{d.title()}: {getattr(f, d)}") for d in DIMS if getattr(f, d)]
+    for dim, label in active:
+        chips.button(f"{label} ×", key=f"chip_{dim}", on_click=clear,
+                     args=("region", "nation") if dim == "region" else (dim,))
+    if active:
+        chips.button("Clear all", type="tertiary", key="clear", on_click=clear, args=("months", *DIMS))
     if not active:
         chips.caption("Click a bar or drag across the time series to filter.")
 
     kpi = res["kpi"]
-    cols = st.columns(4)
+    cols = st.container(key="c_kpis").columns(4)
     cols[0].metric("Orders", f"{kpi['orders']:,}", border=True)
     cols[1].metric("Revenue", money(kpi["revenue"]), border=True)
     cols[2].metric("Avg order value", f"${kpi['aov']:,.0f}", border=True)
     cols[3].metric("Urgent share", f"{kpi['urgent_pct']:.1f}%", border=True)
 
-    with st.container(border=True):
+    with st.container(border=True, key="c_months"):
         st.caption("Monthly revenue (drag to select a range)")
         months = pd.DataFrame({"month": LABELS, "revenue": res["monthly"]})
         brush = alt.selection_interval(encodings=["x"], name="months")
@@ -145,27 +170,27 @@ def dashboard():
                         y=alt.Y("revenue:Q", title=None, axis=MONEY),
                         tooltip=["month", alt.Tooltip("revenue:Q", format=",.0f")])
                 .add_params(brush).properties(usermeta=SVG))
-        st.altair_chart(line, on_select="rerun", key=f"months_{k}")
+        st.altair_chart(line, on_select="rerun", key=f"months_{gen['months']}")
 
     row = st.columns(3)
     for col, dim, title, order in ((row[0], "region", "Region", tpch.regions(c)),
                                    (row[1], "segment", "Market segment", c["segments"]),
                                    (row[2], "priority", "Order priority", c["priorities"])):
-        with col.container(border=True):
+        with col.container(border=True, key=f"c_{dim}"):
             st.caption(title)
-            st.altair_chart(bar_chart(res[dim], dim, order, 190), on_select="rerun", key=f"{dim}_{k}")
-    with st.container(border=True):
+            st.altair_chart(bar_chart(res[dim], dim, order, 190), on_select="rerun", key=f"{dim}_{gen[dim]}")
+    with st.container(border=True, key="c_nation"):
         st.caption(f"Nation in {f.region}" if f.region else "Nation")
-        st.altair_chart(bar_chart(res["nation"], "nation", None, 230, rotate=True), on_select="rerun", key=f"nation_{k}")
+        st.altair_chart(bar_chart(res["nation"], "nation", None, 230, rotate=True), on_select="rerun", key=f"nation_{gen['nation']}")
 
     left, right = st.columns(2)
-    with left.container(border=True):
+    with left.container(border=True, key="c_customers"):
         st.caption("Top customers in the selection")
         with st.spinner("Querying Snowflake..."):
             t = top_customers(f)
         t = t.assign(ORDERS=t.ORDERS.map("{:,}".format), REVENUE=t.REVENUE.map(money))
         st.table(t.set_index("CUSTOMER"))
-    with right.container(border=True):
+    with right.container(border=True, key="c_shipmodes"):
         st.caption("Line revenue by ship mode (6M line items)")
         with st.spinner("Querying Snowflake..."):
             s = ship_modes(f)

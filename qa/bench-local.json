@@ -1,0 +1,739 @@
+{
+  "label": "local",
+  "date": "2026-10-17T06:39:37.569Z",
+  "runs": 5,
+  "quietMs": 300,
+  "chromium": "156.0.8078.4",
+  "apps": {
+    "react": {
+      "url": "http://localhost:8602",
+      "runs": [
+        {
+          "run": 0,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 54,
+              "settledMs": 1451,
+              "pythonRuns": 3,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 20,
+              "settledMs": 2060,
+              "pythonRuns": 3,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 211,
+              "settledMs": 1456,
+              "pythonRuns": 3,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 27,
+              "settledMs": 281,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 1,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 53,
+              "settledMs": 1428,
+              "pythonRuns": 3,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 24,
+              "settledMs": 1529,
+              "pythonRuns": 3,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 212,
+              "settledMs": 1413,
+              "pythonRuns": 3,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 19,
+              "settledMs": 273,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 2,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 36,
+              "settledMs": 1697,
+              "pythonRuns": 3,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 20,
+              "settledMs": 1625,
+              "pythonRuns": 3,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 216,
+              "settledMs": 2243,
+              "pythonRuns": 3,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 27,
+              "settledMs": 281,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 3,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 54,
+              "settledMs": 1548,
+              "pythonRuns": 3,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 25,
+              "settledMs": 1658,
+              "pythonRuns": 3,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 212,
+              "settledMs": 1576,
+              "pythonRuns": 3,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 21,
+              "settledMs": 273,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 4,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 54,
+              "settledMs": 1902,
+              "pythonRuns": 3,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 15,
+              "settledMs": 1807,
+              "pythonRuns": 3,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 213,
+              "settledMs": 1915,
+              "pythonRuns": 3,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 21,
+              "settledMs": 275,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    "native": {
+      "url": "http://localhost:8603",
+      "runs": [
+        {
+          "run": 0,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 350,
+              "settledMs": 350,
+              "pythonRuns": 1,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 340,
+              "settledMs": 340,
+              "pythonRuns": 1,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 316,
+              "settledMs": 316,
+              "pythonRuns": 1,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 198,
+              "settledMs": 198,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 1,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 335,
+              "settledMs": 335,
+              "pythonRuns": 1,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 326,
+              "settledMs": 326,
+              "pythonRuns": 1,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 323,
+              "settledMs": 323,
+              "pythonRuns": 1,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 204,
+              "settledMs": 204,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 2,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 347,
+              "settledMs": 347,
+              "pythonRuns": 1,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 336,
+              "settledMs": 336,
+              "pythonRuns": 1,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 314,
+              "settledMs": 314,
+              "pythonRuns": 1,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 196,
+              "settledMs": 196,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 3,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 353,
+              "settledMs": 353,
+              "pythonRuns": 1,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 337,
+              "settledMs": 337,
+              "pythonRuns": 1,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 314,
+              "settledMs": 314,
+              "pythonRuns": 1,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 200,
+              "settledMs": 200,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 4,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 343,
+              "settledMs": 343,
+              "pythonRuns": 1,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 332,
+              "settledMs": 332,
+              "pythonRuns": 1,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush 1994-01 to 1996-01",
+              "chartsMs": 329,
+              "settledMs": 329,
+              "pythonRuns": 1,
+              "kpis": [
+                "19,117",
+                "$2.9B",
+                "$151,458",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 213,
+              "settledMs": 213,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "summary": {
+    "react": [
+      {
+        "step": "region EUROPE",
+        "chartsMs": 54,
+        "settledMs": 1548,
+        "pythonRuns": 3
+      },
+      {
+        "step": "segment BUILDING",
+        "chartsMs": 20,
+        "settledMs": 1658,
+        "pythonRuns": 3
+      },
+      {
+        "step": "brush 1994-01 to 1996-01",
+        "chartsMs": 212,
+        "settledMs": 1576,
+        "pythonRuns": 3
+      },
+      {
+        "step": "clear all",
+        "chartsMs": 21,
+        "settledMs": 275,
+        "pythonRuns": 0
+      }
+    ],
+    "native": [
+      {
+        "step": "region EUROPE",
+        "chartsMs": 347,
+        "settledMs": 347,
+        "pythonRuns": 1
+      },
+      {
+        "step": "segment BUILDING",
+        "chartsMs": 336,
+        "settledMs": 336,
+        "pythonRuns": 1
+      },
+      {
+        "step": "brush 1994-01 to 1996-01",
+        "chartsMs": 316,
+        "settledMs": 316,
+        "pythonRuns": 1
+      },
+      {
+        "step": "clear all",
+        "chartsMs": 200,
+        "settledMs": 200,
+        "pythonRuns": 1
+      }
+    ]
+  },
+  "parity": [
+    {
+      "step": "region EUROPE",
+      "kpisMatch": true,
+      "react": [
+        "303,070",
+        "$45.8B",
+        "$150,991",
+        "19.9%"
+      ],
+      "native": [
+        "303,070",
+        "$45.8B",
+        "$150,991",
+        "19.9%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000056317",
+        "Customer#000056317"
+      ]
+    },
+    {
+      "step": "segment BUILDING",
+      "kpisMatch": true,
+      "react": [
+        "60,415",
+        "$9.1B",
+        "$150,781",
+        "19.9%"
+      ],
+      "native": [
+        "60,415",
+        "$9.1B",
+        "$150,781",
+        "19.9%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000053809",
+        "Customer#000053809"
+      ]
+    },
+    {
+      "step": "brush 1994-01 to 1996-01",
+      "kpisMatch": true,
+      "react": [
+        "19,117",
+        "$2.9B",
+        "$151,458",
+        "20.0%"
+      ],
+      "native": [
+        "19,117",
+        "$2.9B",
+        "$151,458",
+        "20.0%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000103549",
+        "Customer#000103549"
+      ]
+    },
+    {
+      "step": "clear all",
+      "kpisMatch": true,
+      "react": [
+        "1,498,801",
+        "$226.6B",
+        "$151,219",
+        "20.0%"
+      ],
+      "native": [
+        "1,498,801",
+        "$226.6B",
+        "$151,219",
+        "20.0%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000143500",
+        "Customer#000143500"
+      ]
+    }
+  ]
+}

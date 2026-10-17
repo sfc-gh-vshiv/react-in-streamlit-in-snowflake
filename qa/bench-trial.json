@@ -1,0 +1,275 @@
+{
+  "label": "trial",
+  "date": "2026-10-17T06:28:57.540Z",
+  "runs": 1,
+  "quietMs": 300,
+  "chromium": "156.0.8078.4",
+  "apps": {
+    "react": {
+      "url": "http://localhost:8602",
+      "runs": [
+        {
+          "run": 0,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 53,
+              "settledMs": 1373,
+              "pythonRuns": 3,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 24,
+              "settledMs": 1537,
+              "pythonRuns": 3,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush a range",
+              "chartsMs": 214,
+              "settledMs": 2946,
+              "pythonRuns": 5,
+              "kpis": [
+                "16,715",
+                "$2.5B",
+                "$151,582",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000103549"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 20,
+              "settledMs": 274,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    "native": {
+      "url": "http://localhost:8603",
+      "runs": [
+        {
+          "run": 0,
+          "steps": [
+            {
+              "step": "region EUROPE",
+              "chartsMs": 348,
+              "settledMs": 348,
+              "pythonRuns": 1,
+              "kpis": [
+                "303,070",
+                "$45.8B",
+                "$150,991",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000056317"
+            },
+            {
+              "step": "segment BUILDING",
+              "chartsMs": 332,
+              "settledMs": 332,
+              "pythonRuns": 1,
+              "kpis": [
+                "60,415",
+                "$9.1B",
+                "$150,781",
+                "19.9%"
+              ],
+              "topCustomer": "Customer#000053809"
+            },
+            {
+              "step": "brush a range",
+              "chartsMs": 285,
+              "settledMs": 2134,
+              "pythonRuns": 1,
+              "kpis": [
+                "3,927",
+                "$582.7M",
+                "$148,391",
+                "20.6%"
+              ],
+              "topCustomer": "Customer#000082075"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 211,
+              "settledMs": 211,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Customer#000143500"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "summary": {
+    "react": [
+      {
+        "step": "region EUROPE",
+        "chartsMs": 53,
+        "settledMs": 1373,
+        "pythonRuns": 3
+      },
+      {
+        "step": "segment BUILDING",
+        "chartsMs": 24,
+        "settledMs": 1537,
+        "pythonRuns": 3
+      },
+      {
+        "step": "brush a range",
+        "chartsMs": 214,
+        "settledMs": 2946,
+        "pythonRuns": 5
+      },
+      {
+        "step": "clear all",
+        "chartsMs": 20,
+        "settledMs": 274,
+        "pythonRuns": 0
+      }
+    ],
+    "native": [
+      {
+        "step": "region EUROPE",
+        "chartsMs": 348,
+        "settledMs": 348,
+        "pythonRuns": 1
+      },
+      {
+        "step": "segment BUILDING",
+        "chartsMs": 332,
+        "settledMs": 332,
+        "pythonRuns": 1
+      },
+      {
+        "step": "brush a range",
+        "chartsMs": 285,
+        "settledMs": 2134,
+        "pythonRuns": 1
+      },
+      {
+        "step": "clear all",
+        "chartsMs": 211,
+        "settledMs": 211,
+        "pythonRuns": 1
+      }
+    ]
+  },
+  "parity": [
+    {
+      "step": "region EUROPE",
+      "kpisMatch": true,
+      "react": [
+        "303,070",
+        "$45.8B",
+        "$150,991",
+        "19.9%"
+      ],
+      "native": [
+        "303,070",
+        "$45.8B",
+        "$150,991",
+        "19.9%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000056317",
+        "Customer#000056317"
+      ]
+    },
+    {
+      "step": "segment BUILDING",
+      "kpisMatch": true,
+      "react": [
+        "60,415",
+        "$9.1B",
+        "$150,781",
+        "19.9%"
+      ],
+      "native": [
+        "60,415",
+        "$9.1B",
+        "$150,781",
+        "19.9%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000053809",
+        "Customer#000053809"
+      ]
+    },
+    {
+      "step": "brush a range",
+      "kpisMatch": false,
+      "react": [
+        "16,715",
+        "$2.5B",
+        "$151,582",
+        "19.9%"
+      ],
+      "native": [
+        "3,927",
+        "$582.7M",
+        "$148,391",
+        "20.6%"
+      ],
+      "topCustomerMatch": false,
+      "topCustomer": [
+        "Customer#000103549",
+        "Customer#000082075"
+      ]
+    },
+    {
+      "step": "clear all",
+      "kpisMatch": true,
+      "react": [
+        "1,498,801",
+        "$226.6B",
+        "$151,219",
+        "20.0%"
+      ],
+      "native": [
+        "1,498,801",
+        "$226.6B",
+        "$151,219",
+        "20.0%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Customer#000143500",
+        "Customer#000143500"
+      ]
+    }
+  ]
+}

@@ -223,13 +223,32 @@ def test_poll_of_an_unknown_token_runs_no_sql(st):
     assert len(session.calls) == 1
 
 
-def test_a_slow_query_is_pending_then_polled_to_its_result(st):
+def test_a_slow_query_is_pending_then_polled_to_its_result(st, monkeypatch):
+    monkeypatch.setattr(rb.time, "sleep", lambda s: None)
     session = FakeSession(done=False)
     first = rb.query_job(session, "SELECT 1")
     assert first["pending"] is True and re.fullmatch(r"[0-9a-f]{16}", first["token"])
     session.done = True
     assert rb.poll_job({"token": first["token"]}) == [{"QID": "q1"}]
     assert len(session.calls) == 1                           # polling does not re-run the query
+
+
+def test_a_fast_query_is_answered_in_the_same_run(st, monkeypatch):
+    # A query that finishes within the short wait needs no poll, so no extra rerun.
+    checks = []
+    monkeypatch.setattr(rb.time, "sleep", lambda s: checks.append(s))
+    session = FakeSession(done=False)
+    session.create_async_job = lambda qid: types.SimpleNamespace(
+        is_done=lambda: len(checks) >= 3, result=lambda kind: pd.DataFrame({"QID": [qid]}))
+    assert rb.query_job(session, "SELECT 1") == [{"QID": "q1"}]
+    assert 0 < sum(checks) <= rb._FAST_WAIT + 1e-9
+
+
+def test_the_wait_for_a_fast_answer_is_bounded(st, monkeypatch):
+    slept = []
+    monkeypatch.setattr(rb.time, "sleep", lambda s: slept.append(s))
+    assert rb.query_job(FakeSession(done=False), "SELECT 1")["pending"] is True
+    assert sum(slept) == pytest.approx(rb._FAST_WAIT)
 
 
 def test_results_are_kept_per_session(monkeypatch):
