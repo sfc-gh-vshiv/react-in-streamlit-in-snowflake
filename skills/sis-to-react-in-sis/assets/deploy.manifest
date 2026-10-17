@@ -1,0 +1,6 @@
+# Files deploy.sh uploads. Nothing else in this folder leaves your machine.
+streamlit_app.py
+react_bridge.py
+environment.yml
+pyproject.toml
+ui/sl_ui.js
