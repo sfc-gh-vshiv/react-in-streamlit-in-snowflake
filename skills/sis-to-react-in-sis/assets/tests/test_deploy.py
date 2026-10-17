@@ -45,6 +45,23 @@ def test_refuses_missing_files_and_needs_the_entry_point(tmp_path):
     assert check(tmp_path, "react_bridge.py\n", files=("react_bridge.py",)).returncode != 0
 
 
+@pytest.mark.parametrize("title", ["ends with a backslash \\", 'has "quotes"', "semi;colon", "it's"])
+def test_refuses_titles_that_could_break_the_sql(tmp_path, title):
+    (tmp_path / "streamlit_app.py").write_text("x")
+    (tmp_path / "deploy.manifest").write_text("streamlit_app.py\n")
+    r = subprocess.run(["bash", str(DEPLOY), str(tmp_path), "DB.SCH.APP", "--title", title, "--check"],
+                       capture_output=True, text=True)
+    assert r.returncode != 0
+
+
+def test_accepts_a_plain_title(tmp_path):
+    (tmp_path / "streamlit_app.py").write_text("x")
+    (tmp_path / "deploy.manifest").write_text("streamlit_app.py\n")
+    r = subprocess.run(["bash", str(DEPLOY), str(tmp_path), "DB.SCH.APP", "--title", "Instant BI (native)", "--check"],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+
+
 @pytest.mark.parametrize("app", ["DB.SCH", "DB.SCH.APP.X", "DB.SCH.APP;DROP", "db.sch.\"q\""])
 def test_refuses_odd_app_names(tmp_path, app):
     (tmp_path / "streamlit_app.py").write_text("x")

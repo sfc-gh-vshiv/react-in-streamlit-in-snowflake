@@ -36,7 +36,7 @@ IFS=. read -r DB SCHEMA NAME EXTRA <<< "$APP"
 for part in "$DB" "$SCHEMA" "$NAME"; do [[ $part =~ $ident ]] || die "app must be DB.SCHEMA.NAME with plain identifiers"; done
 [ -z "${EXTRA:-}" ] || die "app must be DB.SCHEMA.NAME"
 for v in "$WH" "$ROLE" "$POOL"; do [ -z "$v" ] || [[ $v =~ $ident ]] || die "not a plain identifier: $v"; done
-[[ $TITLE != *"'"* ]] || die "the title cannot contain a quote"
+[ -z "$TITLE" ] || [[ $TITLE =~ ^[A-Za-z0-9\ ().,:_-]+$ ]] || die "the title may use letters, digits, spaces and ().,:_- only"
 
 # ---------------------------------------------------------------- the manifest gate
 # Only listed files are uploaded. Paths stay inside the app folder, and anything that
@@ -97,7 +97,8 @@ SERVED=$(sql "DESCRIBE STREAMLIT $APP;" --format json | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 d = d[-1] if isinstance(d[0], list) else d
-print(d[0]["default_version_location_uri"])')
+row = {k.lower(): v for k, v in d[0].items()}
+print(row["default_version_location_uri"])')
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 snow stage copy "$SERVED" "$TMP" --recursive "${cli[@]}" ${ROLE:+--role "$ROLE"} >/dev/null
 rc=0

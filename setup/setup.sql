@@ -7,7 +7,7 @@
 
 SET app_role  = 'REACT_SIS_DEMO';          -- the role that owns and deploys the apps
 SET warehouse = 'COMPUTE_WH';              -- an existing warehouse for the apps' queries
-SET pool      = 'SYSTEM_COMPUTE_POOL_CPU'; -- container runtime only: an existing compute pool
+SET pool      = 'SYSTEM_COMPUTE_POOL_CPU'; -- container runtime only (see the end): an existing compute pool
 
 USE ROLE ACCOUNTADMIN;
 
@@ -28,12 +28,12 @@ GRANT OWNERSHIP ON DATABASE REACT_SIS_DEMO TO ROLE IDENTIFIER($app_role) COPY CU
 USE ROLE IDENTIFIER($app_role);
 CREATE SCHEMA IF NOT EXISTS REACT_SIS_DEMO.APPS;
 
--- Container runtime only (deploy.sh --container): the compute pool, and Snowflake's
--- shared PyPI repository so the pinned Streamlit version installs.
+-- Container runtime only (deploy.sh --container): uncomment to grant the compute pool,
+-- and Snowflake's shared PyPI repository so the pinned Streamlit version installs.
 -- https://docs.snowflake.com/en/developer-guide/streamlit/app-development/dependency-management
-USE ROLE ACCOUNTADMIN;
-GRANT USAGE ON COMPUTE POOL IDENTIFIER($pool) TO ROLE IDENTIFIER($app_role);
-GRANT DATABASE ROLE SNOWFLAKE.PYPI_REPOSITORY_USER TO ROLE IDENTIFIER($app_role);
+-- USE ROLE ACCOUNTADMIN;
+-- GRANT USAGE ON COMPUTE POOL IDENTIFIER($pool) TO ROLE IDENTIFIER($app_role);
+-- GRANT DATABASE ROLE SNOWFLAKE.PYPI_REPOSITORY_USER TO ROLE IDENTIFIER($app_role);
 
 -- After deploying, let other people open an app (they need nothing else):
 --   GRANT USAGE ON DATABASE REACT_SIS_DEMO TO ROLE <viewer_role>;

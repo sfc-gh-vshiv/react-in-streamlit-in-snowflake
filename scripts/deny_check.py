@@ -10,7 +10,7 @@ the repo's own URL) passes while every other occurrence of a denied term fails.
 
 Usage:
   python scripts/deny_check.py --deny-file ~/private/denylist.txt \
-      --allow github.com/sfc-gh-vshiv/react-in-streamlit-in-snowflake  .
+      --allow github.com/<you>/<repo>  .
 """
 from __future__ import annotations
 

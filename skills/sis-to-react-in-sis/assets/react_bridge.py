@@ -316,6 +316,7 @@ def many_of(payload: dict, key: str, allowed: Iterable, limit: int = 100) -> lis
 
 
 def int_between(payload: dict, key: str, lo: int, hi: int, default: int | None = None) -> int:
+    """An integer in [lo, hi]. Without a default the key is required."""
     v = payload.get(key, default)
     if isinstance(v, bool) or not isinstance(v, int) or not lo <= v <= hi:
         raise BadRequest("Invalid request.")
