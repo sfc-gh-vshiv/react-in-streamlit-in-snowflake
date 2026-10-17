@@ -1,0 +1,18 @@
+{
+  "name": "react-sis-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.tsx --bundle --minify --format=iife --global-name=SLBundle --define:process.env.NODE_ENV='\"production\"' --charset=ascii --outfile=../ui/sl_ui.js"
+  },
+  "dependencies": {
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "esbuild": "*",
+    "playwright-core": "*"
+  }
+}

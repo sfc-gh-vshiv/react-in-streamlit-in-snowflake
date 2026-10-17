@@ -1,0 +1,23 @@
+# Local Snowflake credentials and connection config never belong in this repo.
+.streamlit/secrets.toml
+secrets.toml
+.env
+*.pem
+*.p8
+*.key
+connections.toml
+config.toml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Local QA artefacts that may contain account details (screens, traces).
+qa/local-*/
+*.log
+.DS_Store
