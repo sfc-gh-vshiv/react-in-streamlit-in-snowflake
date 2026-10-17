@@ -36,7 +36,9 @@ const Q: Queue = W.__slQ || (W.__slQ = {});
 Q.inflight ??= null; Q.queue ??= []; Q.last ??= {}; Q.size ??= {}; Q.ack ??= [];
 Q.polls ??= {}; Q.backoff ??= {}; Q.reported ??= "";
 
-const RETRY_MS = 6000, MAX_TRIES = 5, KEEP = 400, ACK_COUNT = 4, ACK_BYTES = 256 * 1024;
+// Tests shorten the timings with window.__slTiming = { retryMs, maxTries }.
+const T = W.__slTiming || {};
+const RETRY_MS = T.retryMs || 6000, MAX_TRIES = T.maxTries || 5, KEEP = 400, ACK_COUNT = 4, ACK_BYTES = 256 * 1024;
 
 export function send(action: string, payload: Any = {}): string {
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -189,6 +191,7 @@ function adopt() {
     h.__root = undefined;
   }
   if (Q.timer) { W.clearInterval(Q.timer); Q.timer = undefined; }  // its watchdog runs old code
+  if (Q.inflight) Q.timer = W.setInterval(watchdog, 1000);          // keep retrying what is in flight
   W.__slBundleId = BUNDLE_ID;
 }
 

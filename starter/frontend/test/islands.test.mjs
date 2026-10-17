@@ -152,3 +152,48 @@ test("H6: island names are looked up as own properties only", async () => {
   assert.deepEqual(p.errors, []);
   p.close();
 });
+
+test("requests go one at a time: the second waits for the first answer", async () => {
+  const code = await bundle();
+  const p = page({ section: "slow", jobs: {} });
+  p.w.eval(code);
+  await p.rerun({});
+  const first = p.request();
+  p.w.__slStore.jobs = {};               // the view asks again while the first is unanswered
+  await p.rerun({});
+  assert.equal(p.request().id, first.id, "the second request overwrote the first in the input");
+  assert.equal(p.w.__slQ.queue.length, 1, "the second request waits in the queue");
+  const second = p.w.__slQ.queue[0].id;
+  await p.rerun({ responses: { [first.id]: { ok: true, result: { rows: [1] }, error: null } } });
+  await tick(80);                        // the queue moves on shortly after the answer
+  assert.equal(p.request().id, second, "the queued request was sent after the first answer");
+  assert.equal(p.w.__slQ.queue.length, 0);
+  p.close();
+});
+
+test("a request with no answer is retried, then fails visibly and unblocks the queue", async () => {
+  const code = await bundle();
+  const p = page({ section: "slow", jobs: {} });
+  p.w.__slTiming = { retryMs: 150, maxTries: 2 };
+  p.w.eval(code);
+  let slot = await p.rerun({});
+  const first = p.request();
+  await tick(2400);                      // watchdog ticks once a second: retry at ~1 s, give up at ~2 s
+  slot = await p.rerun({});
+  assert.match(slot.textContent, /No response from the app/, "the view should show the failure, not Loading");
+  assert.equal(p.w.__slQ.inflight, null, "the stuck request no longer blocks the queue");
+  assert.ok(p.request().try >= 2, `the request was retried before giving up (try=${p.request().try}, id ${first.id})`);
+  p.close();
+});
+
+test("H1: a bundle swap with a request in flight keeps its retry watchdog", async () => {
+  const code = await bundle();
+  const p = page({ section: "slow", jobs: {} });
+  p.w.eval(code);
+  await p.rerun({});
+  assert.ok(p.w.__slQ.inflight, "a request is in flight");
+  p.w.eval(code);                        // redeploy while waiting for the answer
+  await p.rerun({});
+  assert.equal(typeof p.w.__slQ.timer, "number", "no watchdog: a dropped request would never be retried");
+  p.close();
+});
