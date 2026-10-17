@@ -1,0 +1,21 @@
+# Phase 2 red run: unmodified template (starter/frontend, node --test)
+✖ H1: a redeployed bundle renders the app instead of blanking it (209.25475ms)
+✖ H1: a redeployed bundle replaces CSS left by the previous one (91.458417ms)
+✖ H2: a view keeps its result after the response leaves the props (129.609791ms)
+✖ H2: a view whose response is gone asks again instead of waiting forever (132.516875ms)
+ℹ tests 4
+ℹ pass 0
+ℹ fail 4
+✖ failing tests:
+✖ H1: a redeployed bundle renders the app instead of blanking it (209.25475ms)
+  AssertionError [ERR_ASSERTION]: the app went blank after the bundle changed
+    actual: '',
+✖ H1: a redeployed bundle replaces CSS left by the previous one (91.458417ms)
+  AssertionError [ERR_ASSERTION]: stale CSS survived the redeploy
+    actual: '/* stale */',
+✖ H2: a view keeps its result after the response leaves the props (129.609791ms)
+  AssertionError [ERR_ASSERTION]: the view fell back to Loading after its response left the props
+    actual: 'HomeSlow dataLoading…',
+✖ H2: a view whose response is gone asks again instead of waiting forever (132.516875ms)
+  AssertionError [ERR_ASSERTION]: the view is stuck: no result and no new request
+    actual: false,

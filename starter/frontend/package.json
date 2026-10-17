@@ -3,16 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/index.tsx --bundle --minify --format=iife --global-name=SLBundle --define:process.env.NODE_ENV='\"production\"' --charset=ascii --outfile=../ui/sl_ui.js"
+    "build": "esbuild src/index.tsx --bundle --minify --format=iife --global-name=SLBundle --define:process.env.NODE_ENV='\"production\"' --charset=ascii --outfile=../ui/sl_ui.js",
+    "test": "node --test test/"
   },
   "dependencies": {
-    "react": "^18",
-    "react-dom": "^18"
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "esbuild": "*",
-    "playwright-core": "*"
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "esbuild": "0.28.2",
+    "jsdom": "30.1.3"
   }
 }
