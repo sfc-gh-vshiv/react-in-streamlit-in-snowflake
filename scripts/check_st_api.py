@@ -11,9 +11,15 @@ from __future__ import annotations
 
 import ast
 import sys
+import types
 from pathlib import Path
 
 import streamlit
+
+
+def imports_streamlit_as_st(tree: ast.AST) -> bool:
+    return any(isinstance(n, ast.Import) and any(a.name == "streamlit" and a.asname == "st" for a in n.names)
+               for n in ast.walk(tree))
 
 
 def attr_chain(node: ast.AST) -> list[str] | None:
@@ -28,6 +34,8 @@ def attr_chain(node: ast.AST) -> list[str] | None:
 
 def missing_apis(path: Path) -> list[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    if not imports_streamlit_as_st(tree):
+        return []
     problems = []
     for node in ast.walk(tree):
         if not isinstance(node, ast.Attribute) or isinstance(getattr(node, "ctx", None), ast.Store):
@@ -41,6 +49,10 @@ def missing_apis(path: Path) -> list[str]:
                 problems.append(f"{path}:{node.lineno}: st.{'.'.join(chain[: i + 1])} not in streamlit {streamlit.__version__}")
                 break
             obj = getattr(obj, name)
+            # Only namespaces (st.components, st.column_config) are checked deeper:
+            # objects such as st.user or st.session_state have dynamic attributes.
+            if not isinstance(obj, types.ModuleType):
+                break
     return problems
 
 

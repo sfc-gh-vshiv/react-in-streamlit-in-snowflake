@@ -1,9 +1,10 @@
 {
-  "name": "react-sis-app",
+  "name": "react-sis-starter",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/index.tsx --bundle --minify --format=iife --global-name=SLBundle --define:process.env.NODE_ENV='\"production\"' --charset=ascii --outfile=../ui/sl_ui.js",
+    "build": "node build.mjs",
     "test": "node --test test/"
   },
   "dependencies": {

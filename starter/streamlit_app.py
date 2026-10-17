@@ -1,85 +1,45 @@
-"""Minimal React-in-SiS entry point. Copy to <TARGET_APP_DIR>/streamlit_app.py and extend."""
-from __future__ import annotations
+"""Hello world for React in Streamlit in Snowflake: one island, one slow query.
 
-import hashlib
-import time
+Run locally (uses your default Snowflake connection, or SNOWFLAKE_DEFAULT_CONNECTION_NAME):
+    streamlit run streamlit_app.py
+"""
+from __future__ import annotations
 
 import streamlit as st
 
-from react_bridge import bridge_request, bridge_respond, bridge_responses, load_bundle, render_island
+from react_bridge import bridge_request, bridge_responses, handle, load_bundle, query_job, render_island
 
-st.set_page_config(layout="wide", initial_sidebar_state="expanded")
-load_bundle()
-
-# Bridge input first, so a request can set sidebar widget state before those widgets exist.
-req = bridge_request()
+st.set_page_config(page_title="React in Streamlit in Snowflake", layout="wide")
+load_bundle()              # first: the bundle (sent once per session)
+req = bridge_request()     # then the hidden request channel
 
 
-def get_session():
+@st.cache_resource(show_spinner=False)
+def _local_session():
+    return st.connection("snowflake").session()
+
+
+def session():
     try:
         from snowflake.snowpark.context import get_active_session
-        return get_active_session()            # SiS
+        return get_active_session()         # in Snowflake
     except Exception:
-        return st.connection("snowflake").session()  # local
+        return _local_session()             # on your machine
 
 
-session = get_session()
+def slow(_payload: dict):
+    # A deliberately slow query, run as a background job so the page stays responsive.
+    return query_job(session(), "SELECT CURRENT_TIMESTAMP()::STRING AS NOW, SYSTEM$WAIT(3) AS WAITED")
 
 
-# ------------------------------------------------------------------ async jobs
-@st.cache_resource(show_spinner=False)
-def _job_results() -> dict:
-    return {}  # token -> (expires_at, result), shared across sessions
+handle(req, {"slow": slow})
 
 
-_POST = {"slow": lambda df: df.to_dict("records")}
-
-
-def run_job(token: str, kind: str, sql: str | None) -> dict:
-    """Finished result, or {"pending": True, "token": ...} while the query runs."""
-    cache = _job_results()
-    hit = cache.get(token)
-    if hit and hit[0] > time.time():
-        return hit[1]
-    jobs = st.session_state.setdefault("_sl_jobs", {})
-    if token not in jobs:
-        if sql is None:
-            raise ValueError("job expired, please retry")
-        jobs[token] = (kind, session.sql(sql).collect_nowait().query_id)
-    kind, qid = jobs[token]
-    job = session.create_async_job(qid)
-    if not job.is_done():
-        return {"pending": True, "token": token}
+def first_name() -> str:
     try:
-        result = _POST[kind](job.result("pandas"))
-    finally:
-        jobs.pop(token, None)
-    cache[token] = (time.time() + 3600, result)
-    return result
+        return (st.user.email or "").split("@")[0].split(".")[0].title()
+    except Exception:
+        return ""
 
 
-def _token(*parts) -> str:
-    return hashlib.sha1("|".join(map(str, parts)).encode()).hexdigest()[:16]
-
-
-# ------------------------------------------------------------------ bridge actions
-if req:
-    try:
-        a, pl = req["action"], req.get("payload") or {}
-        if a == "slow":
-            sql = "SELECT CURRENT_TIMESTAMP() AS TS, SYSTEM$WAIT(3) AS W"
-            bridge_respond(req["id"], run_job(_token("slow"), "slow", sql))
-        elif a == "poll":
-            bridge_respond(req["id"], run_job(str(pl["token"]), "", None))
-        else:
-            bridge_respond(req["id"], error=f"unknown action {a}")
-    except Exception as e:  # surface the real error in the UI
-        bridge_respond(req["id"], error=str(e))
-
-user = ""
-try:
-    user = (st.user.email or "").split("@")[0].split(".")[0].title()
-except Exception:
-    pass
-
-render_island("App", {"user": user or "there", "responses": bridge_responses()}, key="app")
+render_island("App", {"user": first_name() or "there", "responses": bridge_responses()}, key="app")

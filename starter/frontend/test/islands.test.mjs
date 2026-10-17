@@ -4,19 +4,13 @@
 // mount the island into a fresh slot.
 import { test as nodeTest, after } from "node:test";
 import assert from "node:assert/strict";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { JSDOM, VirtualConsole } from "jsdom";
-
-const ENTRY = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "src", "index.tsx");
+import { options } from "../build.mjs";
 
 let cached;
 async function bundle() {
-  cached ??= (await build({
-    entryPoints: [ENTRY], bundle: true, format: "iife", write: false, charset: "ascii",
-    define: { "process.env.NODE_ENV": '"production"' }, logLevel: "silent",
-  })).outputFiles[0].text;
+  cached ??= (await build({ ...options, write: false, logLevel: "silent" })).outputFiles[0].text;
   return cached;
 }
 
@@ -108,5 +102,53 @@ test("H2: a view whose response is gone asks again instead of waiting forever", 
   const again = p.request();
   assert.ok(/42/.test(slot.textContent) || (again && again.id !== first.id && again.action === "slow"),
     "the view is stuck: no result and no new request");
+  p.close();
+});
+
+test("H5: the bridge input stays out of keyboard navigation and never takes the user's focus", async () => {
+  const code = await bundle();
+  const p = page({ section: "slow", jobs: {} });
+  const field = p.w.document.createElement("input");
+  p.w.document.body.appendChild(field);
+  field.focus();
+  let blurs = 0;
+  field.addEventListener("blur", () => blurs++);
+  p.w.eval(code);
+  await p.rerun({});
+  const input = p.w.document.querySelector(".st-key-sl_bridge input");
+  assert.equal(input.tabIndex, -1);
+  assert.equal(input.getAttribute("aria-hidden"), "true");
+  assert.equal(p.request()?.action, "slow", "a request was written");
+  assert.equal(p.w.document.activeElement, field, "writing the request moved the user's focus");
+  assert.equal(blurs, 0, "the user's field lost focus while the request was written");
+  p.close();
+});
+
+test("H2: requests acknowledge every response the props still carry", async () => {
+  const code = await bundle();
+  const p = page({ section: "slow", jobs: {} });
+  p.w.eval(code);
+  await p.rerun({});
+  const first = p.request();
+  const responses = { [first.id]: { ok: true, result: { rows: [1] }, error: null } };
+  await p.rerun({ responses });
+  p.w.__slStore.jobs = {};             // reopen the view: it asks again
+  await p.rerun({ responses });
+  const next = p.request();
+  assert.notEqual(next.id, first.id);
+  assert.deepEqual(next.ack, [first.id], "the next request should acknowledge the response Python is still sending");
+  p.close();
+});
+
+test("H6: island names are looked up as own properties only", async () => {
+  const code = await bundle();
+  const p = page();
+  p.w.eval(code);
+  const slot = p.w.document.createElement("div");
+  p.w.document.body.appendChild(slot);
+  p.w.SnowUI.mount(slot, "constructor", {});
+  await tick();
+  assert.equal(slot.textContent, "Unknown island: constructor");
+  assert.deepEqual(p.errors, []);
   p.close();
 });
