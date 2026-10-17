@@ -28,7 +28,7 @@ def synthetic_cube(rng: random.Random) -> dict:
         for n in range(25):
             for s in range(5):
                 for p in range(5):
-                    if rng.random() < 0.3:          # sparse, like a real cube can be
+                    if rng.random() < 0.9:          # sparse: keeps the fixture small
                         continue
                     o = rng.randint(1, 60)
                     for k, v in zip("mnspor", (m, n, s, p, o, o * rng.randint(900, 450_000))):
