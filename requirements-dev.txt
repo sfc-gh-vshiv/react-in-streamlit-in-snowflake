@@ -1,0 +1,7 @@
+# Local development and tests (the apps themselves pin Streamlit in
+# environment.yml and pyproject.toml for Snowflake).
+streamlit==1.52.2
+snowflake-snowpark-python[pandas]==1.55.2
+altair==5.5.0
+pandas==2.3.3
+pytest==9.1.1
