@@ -1,0 +1,6 @@
+# Files deploy.sh uploads. Nothing else in this folder leaves your machine.
+streamlit_app.py
+frame.py
+tpch.py
+environment.yml
+pyproject.toml
