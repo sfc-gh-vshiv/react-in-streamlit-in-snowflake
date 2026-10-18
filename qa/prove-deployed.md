@@ -23,5 +23,5 @@ redeploying, all files still match and `DESCRIBE STREAMLIT` shows
 `user_packages = python==3.11.*,streamlit==1.52.2,snowflake-snowpark-python` for all three.
 
 Headless browsers can't pass Snowsight sign-in, so the functional checks are the local smoke
-tests ([prove-local.md](prove-local.md)). Opening the three redeployed warehouse apps by hand
-in Snowsight: pending.
+tests ([prove-local.md](prove-local.md)). After the redeploy, all four apps were opened by
+hand in Snowsight and load and run.
