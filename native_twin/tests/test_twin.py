@@ -22,6 +22,11 @@ def test_shared_module_is_identical_to_the_react_apps():
     assert (ROOT / "tpch.py").read_bytes() == (ROOT.parent / "app" / "tpch.py").read_bytes()
 
 
+def test_environment_matches_the_starter():
+    # starter/tests/test_environment.py checks the starter's copy resolves on the warehouse runtime
+    assert (ROOT / "environment.yml").read_bytes() == (ROOT.parent / "starter" / "environment.yml").read_bytes()
+
+
 @pytest.mark.parametrize("case", FIX["cases"], ids=lambda c: str(c["filters"]))
 def test_pandas_aggregate_matches_the_reference(case):
     got = frame.aggregate(DF, tpch.Filters(**case["filters"]))

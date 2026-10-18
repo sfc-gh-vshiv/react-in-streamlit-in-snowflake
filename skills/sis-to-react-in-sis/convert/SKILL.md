@@ -74,3 +74,4 @@ taking focus, no console errors, no requests to other hosts. Add checks for your
 | A view stuck on "Loading" | its answer left the props | browser cache + acks + re-request |
 | First request takes 6 s | Enter sent in the same task as the value | Enter in the next task |
 | Typing elsewhere is interrupted | bridge input took focus | input never focused |
+| "Packages not found: python==3.11" | `=` in `environment.yml` is exact | `python=3.11.*` |

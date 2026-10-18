@@ -1,10 +1,12 @@
 # Warehouse runtime dependencies (Snowflake Anaconda Channel).
 # Keep the Streamlit pin on a version listed as supported for warehouse runtimes:
 # https://docs.snowflake.com/en/developer-guide/streamlit/app-development/dependency-management
+# '=' is an exact match here, and Python versions have a patch number, so write
+# python=3.11.* (python=3.11 fails with "Packages not found: python==3.11").
 name: sf_env
 channels:
   - snowflake
 dependencies:
-  - python=3.11
+  - python=3.11.*
   - streamlit=1.52.2
   - snowflake-snowpark-python

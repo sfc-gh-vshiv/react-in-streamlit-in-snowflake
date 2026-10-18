@@ -94,6 +94,7 @@ Results are kept per session, never shared between viewers.
 | Raw HTML, eval or network calls in the bundle | static check | `frontend/test/static.test.mjs` |
 | Focus stolen while typing | input never focused, out of tab order | `islands.test.mjs` H5; smoke test |
 | Unpinned Streamlit changes under you | `environment.yml` and `pyproject.toml` pins | `scripts/check_st_api.py` |
+| Warehouse app fails with "Packages not found: python==3.11" | `python=3.11.*`, because `=` is an exact match | `starter/tests/test_environment.py` |
 | Credentials uploaded on deploy | manifest-only upload, refusals | `starter/tests/test_deploy.py` |
 | The React and native apps disagree | one SQL file, one reference, parity checks | `app/frontend/test/parity.test.mjs`, `native_twin/tests`, bench parity |
 | Names from a private account in the repo | deny-list scan kept outside the repo | `scripts/deny_check.py` |

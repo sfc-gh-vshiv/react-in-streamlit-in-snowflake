@@ -15,6 +15,11 @@ import make_parity_fixture  # noqa: E402
 import tpch  # noqa: E402
 
 
+def test_environment_matches_the_starter():
+    # starter/tests/test_environment.py checks the starter's copy resolves on the warehouse runtime
+    assert (ROOT / "environment.yml").read_bytes() == (ROOT.parent / "starter" / "environment.yml").read_bytes()
+
+
 def test_parity_fixture_is_current():
     committed = json.loads(make_parity_fixture.FIXTURE.read_text())
     assert committed == json.loads(json.dumps(make_parity_fixture.build())), \

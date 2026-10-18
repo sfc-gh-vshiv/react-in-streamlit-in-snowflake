@@ -19,6 +19,8 @@ SKIP = {"node_modules", "__pycache__", ".pytest_cache", ".DS_Store"}
 COPIES = [  # (source, copy): files the apps share with the starter
     (STARTER / "react_bridge.py", ROOT / "app" / "react_bridge.py"),
     (STARTER / "frontend" / "src" / "kit.tsx", ROOT / "app" / "frontend" / "src" / "kit.tsx"),
+    (STARTER / "environment.yml", ROOT / "app" / "environment.yml"),
+    (STARTER / "environment.yml", ROOT / "native_twin" / "environment.yml"),
     (ROOT / "app" / "tpch.py", ROOT / "native_twin" / "tpch.py"),
 ]
 

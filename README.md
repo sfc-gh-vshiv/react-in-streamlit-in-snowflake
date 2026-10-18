@@ -86,6 +86,10 @@ python scripts/sync.py --check              # skill assets and shared files in s
 
 - **Streamlit 1.52 or later.** The warehouse runtime supports up to 1.52.2, which the apps pin
   ([supported versions](https://docs.snowflake.com/en/developer-guide/streamlit/app-development/dependency-management)).
+- **Warehouse runtime Python pin.** In `environment.yml`, `=` is an exact match and Python
+  versions have a patch number, so the apps pin `python=3.11.*`; `python=3.11` fails with
+  "Packages not found: python==3.11"
+  ([dependency management](https://docs.snowflake.com/en/developer-guide/streamlit/app-development/dependency-management)).
 - **Container runtime:** pass `--container --pool <POOL>`. Pinned packages install from
   Snowflake's shared PyPI repository, which `setup.sql` grants.
 - **Owner's rights.** Apps query as their owner role, so a viewer sees what that role can see;
