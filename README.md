@@ -18,9 +18,9 @@ This repo has three apps and the tooling around them:
 
 ## Why
 
-In Instant BI a click on a bar updates four KPIs and five charts in about 20 to 55 ms, with no
+In Instant BI a click on a bar updates four KPIs and five charts in about 8 to 25 ms, with no
 Python rerun, because the 49,000-row order cube is filtered in the browser. The native twin
-takes 200 to 350 ms per interaction (one fragment rerun each). Both measured locally, same
+takes about 220 to 360 ms per interaction (one fragment rerun each). Both measured locally, same
 input, same rules: see [measurements](docs/measurements.md) for the method and the caveats.
 
 ## Try it
@@ -98,6 +98,57 @@ python scripts/sync.py --check              # skill assets and shared files in s
 - **Self-contained bundles.** The page's content security policy blocks scripts and styles from
   other domains, so everything, charts included, is bundled.
 - **A round trip to Python is a rerun.** The speed comes from interactions that don't need one.
+
+## Three lessons that cost me real time
+
+Getting React on screen took an afternoon. Keeping it there took the rest of the project. If you
+change the plumbing, these are the three traps to know about.
+
+### Smuggling code past a sanitiser
+
+`st.html` runs markup through DOMPurify, and in practice **a `<script>` survives only if its text
+has no `<` followed by a letter**. A minified React bundle is full of those.
+
+So the bundle never travels as script text. It rides base64-encoded in a `data-*` attribute, and a
+tiny bootstrap decodes it into a script element:
+
+```js
+var b = atob(d.dataset.code);
+var s = document.createElement('script');
+s.textContent = b;
+document.head.appendChild(s);
+```
+
+The bootstrap itself must contain no `<` at all, so its comparisons read `400 > n`, never
+`n < 400`. Props and data take the same base64 route. Yes, I now write comparisons backwards on
+purpose.
+
+### The 6.3-second first load
+
+The bridge from React to Python is a hidden `st.text_input`: React writes a JSON request into it
+and presses Enter, and Python reads it on the next rerun. The template I started from also focused
+and blurred that input, which stole focus from whatever you were typing. I removed the focus
+dance, and the first load took **6.3 seconds**.
+
+The blur had been doing the real work. Streamlit's input commits on Enter by comparing the DOM
+value with its own React state, which React applies after the current task. My Enter fired in the
+same task, saw no change and did nothing, so the request waited six seconds for the watchdog to
+re-send it.
+
+The fix is one line of scheduling: send Enter in the next task (`setTimeout(..., 0)`), the way a
+real keypress arrives. First load went from **6.3 s to 0.3 s**, and the input never takes focus.
+
+### Reruns, redeploys and lost answers
+
+Every rerun re-creates every `st.html` element, so React can't live inside one. Each island
+renders into **a persistent host element** that moves into each rerun's slot, with state in window
+stores, so nothing remounts or flickers. The bundle and the cube go once per session; later reruns
+send a placeholder instead of a 790 KB bundle.
+
+Redeploys were the sneaky one. A second copy of React tried to render into the first copy's root,
+and the page went blank. Now a changed bundle **unmounts every root the old one made** first.
+Answers can also fall out of the props before a view reads them, so the browser keeps its own
+response cache, acknowledges what it has and re-requests what it lost.
 
 ## Status
 

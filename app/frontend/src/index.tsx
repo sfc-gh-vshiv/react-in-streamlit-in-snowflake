@@ -1,51 +1,117 @@
 // Instant BI: cross-filtered TPC-H order analytics, computed in the browser.
-// The cube arrives once per session (react_bridge.send_data); clicks never rerun Python.
-// Python is asked only for the two drill-downs, which run as background queries.
+// The cube arrives once per session (react_bridge.send_data); clicks, drags and hovers
+// never rerun Python. Python is asked only for the two drill-downs, which run as
+// background queries.
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Any, data, defineIslands, job, send, setStore, store, useStore, W } from "./kit";
-import { CHARTS, EChart, markInput, Tween } from "./charts";
-import { aggregate, allMonths, Cube, Filters, Totals } from "./cube";
+import { CHARTS, ChartEvent, EChart, FONT, INK, inputCommitted, LINE, markInput, MOTION, MUTE, Tween } from "./charts";
+import ROBOTO from "@fontsource-variable/roboto-condensed/files/roboto-condensed-latin-wght-normal.woff2";
+import { aggregate, allMonths, Cube, Filters, Result, Totals } from "./cube";
 
 declare const __SL_VERSION__: string;
 
-const BLUE = "#29B5E8", NAVY = "#11567F", MUTED = "#94a3b8", PICKED = "#11567F";
-const CHART_NAMES = ["monthly", "region", "nation", "segment", "priority"];
 const DIMS = ["region", "nation", "segment", "priority"] as const;
 type Dim = (typeof DIMS)[number];
 
+// ------------------------------------------------------------------ palette
+// Color carries meaning: one hue per dimension (Snowflake brand, colorblind-safe set),
+// and Mid Blue for measures over time. Unpicked bars fade to a tint of their own hue.
+const MEASURE = "#11567F";
+const HUE: Record<Dim | "months", string> = {
+  region: "#29B5E8", nation: "#29B5E8", segment: "#FF9F36", priority: "#7D44CF", months: MEASURE,
+};
+const mix = (hex: string, t: number, to = 255) => "#" + [1, 3, 5].map((i) =>
+  Math.round(to + (parseInt(hex.slice(i, i + 2), 16) - to) * t).toString(16).padStart(2, "0")).join("");
+const tint = (hex: string, t = 0.3) => mix(hex, t);      // toward white
+const shade = (hex: string, t = 0.65) => mix(hex, t, 0); // toward black
+
 const CSS = `
-.sl{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#0f172a}
-.ibi{display:flex;flex-direction:column;gap:14px}
-.ibi .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px}
-.ibi h1{font-size:22px;margin:0;font-weight:650}
-.ibi .sub{color:#64748b;font-size:13px}
-.ibi .meter{margin-left:auto;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:#334155;background:#f1f5f9;border-radius:8px;padding:4px 10px;white-space:nowrap}
-.ibi .chips{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;align-items:center}
-.ibi .chip{border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:3px 10px;font:inherit;font-size:13px;cursor:pointer}
-.ibi .chip:hover{border-color:${NAVY}}
-.ibi .chip.clear{border:0;background:none;color:${NAVY};text-decoration:underline}
-.ibi .hint{color:#94a3b8;font-size:13px}
+@font-face{font-family:'Roboto Condensed Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${ROBOTO}) format('woff2')}
+.sl{font-family:${FONT};color:${INK};--sf:#29B5E8;--sf-d:#0b76a8;--ink:${INK};--mute:${MUTE};--line:${LINE}}
+.sl *{box-sizing:border-box}
+.sl .mi{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;font-feature-settings:'liga';-webkit-font-smoothing:antialiased;display:inline-block;vertical-align:middle;font-size:1.15em;font-variation-settings:'FILL' 0,'wght' 450}
+.ibi{display:flex;flex-direction:column;gap:16px}
+.ibi .hdr{position:relative;overflow:hidden;border-radius:22px;padding:24px 28px 40px;color:#fff;display:flex;align-items:center;gap:16px;
+  background:radial-gradient(800px 320px at 90% -60%,rgba(255,255,255,.28),transparent 60%),radial-gradient(600px 260px at -5% 130%,rgba(17,86,125,.55),transparent 60%),linear-gradient(120deg,#11567F,#1A8BC2 55%,#29B5E8)}
+.ibi .logo{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;flex:none;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);box-shadow:0 8px 24px rgba(8,47,73,.25)}
+.ibi .logo .mi{font-size:30px;font-variation-settings:'FILL' 1,'wght' 500}
+.ibi h1{margin:0;font-size:30px;line-height:1.1;font-weight:700;letter-spacing:-.02em}
+.ibi .hdr .sub{margin-top:5px;font-size:13.5px;color:rgba(240,249,255,.9)}
+.ibi .meter{margin-left:auto;align-self:flex-start;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ibi .meter span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ibi .meter b{font-weight:700}
+.ibi .ctl{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;margin:-42px 18px 0;position:relative;z-index:2;min-height:52px;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:9px 12px;box-shadow:0 10px 30px rgba(15,23,42,.10)}
+.ibi .ctl>.mi{color:var(--sf-d);font-size:20px}
+.ibi .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1;min-width:0}
+.ibi .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid;border-radius:999px;padding:4px 10px 4px 9px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink);transition:box-shadow .15s}
+.ibi .chip:hover{box-shadow:0 2px 8px rgba(15,23,42,.12)}
+.ibi .chip .x{font-size:15px;color:var(--mute)}
+.ibi .chip .dot{width:8px;height:8px;border-radius:3px;display:inline-block;flex:none}
+.ibi .chip.clear{margin-left:auto;border-color:var(--line);background:#fff;color:var(--sf-d)}
+.ibi .hint{color:var(--mute);font-size:13px}
+.ibi .hint b{color:var(--ink);font-weight:600}
 .ibi .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.ibi .kpi{background:#f8fafc;border-radius:12px;padding:12px 14px}
-.ibi .kpi .k{color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-.ibi .kpi .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;margin-top:2px}
-.ibi .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
-.ibi .card{border:1px solid #e2e8f0;border-radius:12px;padding:10px 12px 4px;min-width:0;position:relative;grid-column:span 3}
+.ibi .kpi{position:relative;border-radius:16px;padding:14px 16px;background:#fff;border:1px solid var(--line);min-width:0;transition:transform .2s,box-shadow .2s}
+.ibi .kpi:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(15,23,42,.08)}
+.ibi .kpi .k{font-size:11px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.07em;display:flex;gap:8px;align-items:center}
+.ibi .ichip{width:28px;height:28px;border-radius:9px;display:inline-grid;place-items:center;flex:none}
+.ibi .ichip .mi{font-size:18px}
+.ibi .kpi .v{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ibi .kpi .ctx{font-size:12.5px;color:var(--mute);margin-top:2px;min-height:17px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibi .kpi .ctx b{font-weight:700}
+.ibi .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.ibi .card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px 16px 6px;min-width:0;position:relative;grid-column:span 3}
 .ibi .card.third{grid-column:span 2}
-.ibi .card h3{font-size:13px;font-weight:600;margin:0 0 4px;color:#334155}
 .ibi .card.wide{grid-column:1/-1}
+.ibi .card .head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.ibi .card h3{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em}
+.ibi .card .cap{font-size:12px;color:var(--mute);margin-top:1px}
 .ibi .card.busy .body{opacity:.45;transition:opacity .15s}
-.ibi .card .state{position:absolute;top:10px;right:12px;font-size:12px;color:#64748b}
+.ibi .card .state{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sf-d);background:#eff9fe;border:1px solid #bae6fd;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ibi .card .state:empty{display:none}
+.ibi .spin{width:11px;height:11px;border-radius:50%;border:2px solid #bae6fd;border-top-color:var(--sf-d);animation:ibiSpin .8s linear infinite}
+@keyframes ibiSpin{to{transform:rotate(360deg)}}
 .ibi table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
-.ibi th,.ibi td{text-align:left;padding:5px 8px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.ibi th{text-align:left;font-weight:600;color:#334155;background:#f8fafc;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ibi th:first-child{border-radius:10px 0 0 0}.ibi th:last-child{border-radius:0 10px 0 0}
+.ibi td{padding:7px 10px;border-bottom:1px solid #f1f5f9;white-space:nowrap}
+.ibi tr:hover td{background:#f8fbff}
 .ibi th.n,.ibi td.n{text-align:right}
+.ibi .tw{max-height:344px;overflow:auto;margin:6px -4px 10px;padding:0 4px}
+.ibi thead th{position:sticky;top:0;z-index:1}
+.ibi tbody th.rk{background:none;color:var(--mute);font-weight:400;width:28px;padding:7px 10px;border-bottom:1px solid #f1f5f9}
+.ibi td.rev{position:relative;min-width:120px}
+.ibi td.rev i{position:absolute;right:10px;top:50%;height:18px;margin-top:-9px;border-radius:5px;background:${tint(MEASURE, 0.14)}}
+.ibi td.rev span{position:relative;font-weight:600}
 .ibi .err{color:#b91c1c;font-size:13px}
-@media (max-width:900px){.ibi .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ibi .grid{grid-template-columns:1fr}.ibi .card,.ibi .card.third{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.ibi .kpi,.ibi .kpi:hover{transition:none;transform:none}.ibi .spin{animation:none}}
+@media (max-width:900px){.ibi .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ibi .grid{grid-template-columns:1fr}.ibi .card,.ibi .card.third{grid-column:1/-1}.ibi .meter{display:none}}
 `;
 
 const int = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 const money = (v: number) => "$" + (v >= 1e9 ? (v / 1e9).toFixed(1) + "B" : v >= 1e6 ? (v / 1e6).toFixed(1) + "M" : int.format(v));
+const count = (v: number) => (v >= 1e6 ? (v / 1e6).toFixed(2) + "M" : int.format(v));
 const pct = (v: number) => v.toFixed(1) + "%";
+const Dot = ({ color }: { color: string }) => <span className="dot" style={{ background: color }} />;
+/** A Material Symbols icon (the font ships with Streamlit, so nothing is loaded). */
+const Icon = ({ name, style }: { name: string; style?: React.CSSProperties }) => <span className="mi" aria-hidden="true" style={style}>{name}</span>;
+/** An icon on a tint of its own color. */
+const Chip = ({ icon, color }: { icon: string; color: string }) => (
+  <span className="ichip" style={{ background: tint(color, 0.14), color: shade(color, 0.85) }}><Icon name={icon} /></span>
+);
+/** A panel heading: icon chip, title, optional caption, and a status pill on the right. */
+function Head({ icon, color, title, cap, state }: { icon: string; color: string; title: string; cap?: string; state?: React.ReactNode }) {
+  return (
+    <div className="head">
+      <Chip icon={icon} color={color} />
+      <div><h3>{title}</h3>{cap && <div className="cap">{cap}</div>}</div>
+      <span className="state">{state}</span>
+    </div>
+  );
+}
+const querying = (busy: boolean, elapsed?: number) =>
+  busy ? <><span className="spin" />Querying Snowflake{elapsed ? ` ${elapsed}s` : ""}</> : null;
 
 // ------------------------------------------------------------------ filter state
 // Lives on the persistent store, so it survives reruns.
@@ -53,7 +119,7 @@ function useFilters(c: Cube): [Filters, (f: Filters) => void] {
   const s = useStore();
   if (!s.filters) s.filters = allMonths(c);
   const update = (f: Filters) => {
-    markInput(CHART_NAMES, (ms) => setStore({ latency: ms }));
+    markInput((ms) => setStore({ latency: ms }));
     setStore({ filters: f });
   };
   return [s.filters, update];
@@ -63,37 +129,51 @@ const isAll = (f: Filters, c: Cube) =>
   f.first === 0 && f.last === c.months.length - 1 && DIMS.every((d) => f[d] == null);
 
 // ------------------------------------------------------------------ chart options
-function bars(name: string, totals: Totals, picked: string | null, order?: string[], rotate = 0) {
+/** What hovering a bar would look like as a filter: that member's slice, in its own hue. */
+type Preview = { label: string; color: string; result: Result };
+
+function bars(name: string, totals: Totals, picked: string | null, color: string,
+              preview: { totals: Totals; color: string } | null, order?: string[], rotate = 0) {
   const keys = order ? order.filter((k) => k in totals) : Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
   const values = keys.map((k) => ({
     value: totals[k],
-    itemStyle: { color: picked == null || picked === k ? (picked === k ? PICKED : BLUE) : MUTED },
+    itemStyle: picked === k ? { color, borderColor: shade(color), borderWidth: 2 }
+      : { color: picked == null ? tint(color, 0.85) : tint(color), borderWidth: 0 },
   }));
   return {
-    animation: false,
+    ...MOTION,
     grid: { left: 56, right: 16, top: 8, bottom: rotate && keys.length > 8 ? 64 : 28 },
     tooltip: { trigger: "item", valueFormatter: (v: number) => money(v) },
-    xAxis: { type: "category", data: keys, axisLabel: { fontSize: 10, interval: 0, rotate: keys.length > 8 ? rotate : 0, width: keys.length > 8 ? 100 : 72, overflow: "truncate" } },
-    yAxis: { type: "value", axisLabel: { fontSize: 10, formatter: (v: number) => money(v) }, splitLine: { lineStyle: { color: "#f1f5f9" } } },
-    series: [{ name, type: "bar", data: values, barMaxWidth: 36, cursor: "pointer" }],
+    xAxis: { type: "category", data: keys, axisLabel: { interval: 0, rotate: keys.length > 8 ? rotate : 0, width: keys.length > 8 ? 100 : 76, overflow: "truncate" } },
+    yAxis: { type: "value", axisLabel: { formatter: (v: number) => money(v) } },
+    series: [
+      { id: "base", name, type: "bar", data: values, barMaxWidth: 36, cursor: "pointer",
+        emphasis: { focus: "none", itemStyle: { color: shade(color, 0.85) } } },
+      // The hover preview: always present (empty when idle) so updates animate in place.
+      { id: "preview", name: "Preview", type: "bar", silent: true, barGap: "-100%", barMaxWidth: 36, z: 3,
+        data: preview ? keys.map((k) => preview.totals[k] || 0) : [],
+        itemStyle: { color: preview?.color || color, opacity: 0.9 } },
+    ],
   };
 }
 
-function monthly(c: Cube, values: number[], f: Filters) {
+function monthly(c: Cube, values: number[], preview: Preview | null) {
   return {
-    animation: false,
+    ...MOTION,
     grid: { left: 56, right: 16, top: 12, bottom: 28 },
     tooltip: { trigger: "axis", valueFormatter: (v: number) => money(v) },
-    xAxis: { type: "category", data: c.months, boundaryGap: false, axisLabel: { fontSize: 10 } },
-    yAxis: { type: "value", axisLabel: { fontSize: 10, formatter: (v: number) => money(v) }, splitLine: { lineStyle: { color: "#f1f5f9" } } },
-    brush: { xAxisIndex: 0, brushType: "lineX", brushMode: "single", transformable: true, throttleType: "debounce", throttleDelay: 80,
-             brushStyle: { color: "rgba(41,181,232,.12)", borderColor: BLUE } },
-    series: [{
-      name: "Revenue", type: "line", data: values, showSymbol: false, lineStyle: { color: NAVY, width: 2 },
-      areaStyle: { color: "rgba(41,181,232,.10)" },
-      markArea: f.first === 0 && f.last === c.months.length - 1 ? undefined
-        : { silent: true, itemStyle: { color: "rgba(17,86,127,.06)" }, data: [[{ xAxis: c.months[f.first] }, { xAxis: c.months[f.last] }]] },
-    }],
+    xAxis: { type: "category", data: c.months, boundaryGap: false },
+    yAxis: { type: "value", axisLabel: { formatter: (v: number) => money(v) } },
+    brush: { xAxisIndex: 0, brushType: "lineX", brushMode: "single", transformable: true, throttleType: "fixRate", throttleDelay: 30,
+             brushStyle: { color: "rgba(17,86,127,.10)", borderColor: MEASURE } },
+    series: [
+      { id: "revenue", name: "Revenue", type: "line", data: values, showSymbol: false, color: MEASURE, lineStyle: { color: MEASURE, width: 2.4 },
+        areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [
+          { offset: 0, color: "rgba(41,181,232,.32)" }, { offset: 1, color: "rgba(41,181,232,.02)" }] } } },
+      { id: "preview", name: preview?.label || "Preview", type: "line", silent: true, showSymbol: false, z: 3,
+        data: preview ? preview.result.monthly : [], color: preview?.color || MEASURE,
+        lineStyle: { color: preview?.color || MEASURE, width: 2.4, type: "dashed" } },
+    ],
   };
 }
 
@@ -106,7 +186,8 @@ function useSettled<T>(value: T, ms: number): T {
 }
 
 /** A background query that follows the filters. While a new answer is on its way the
- *  previous one stays on screen, dimmed, so the panel never blanks or jumps. */
+ *  previous one stays on screen, dimmed, so the panel never blanks or jumps. It waits
+ *  until the filters stop moving, so a drag sends one query, not one per frame. */
 function useDrill<T>(action: string, f: Filters): { shown: T | null; busy: boolean; error: string | null; elapsed?: number } {
   const settled = useSettled(f, 250);
   const key = action + ":" + JSON.stringify(settled);
@@ -119,19 +200,21 @@ function useDrill<T>(action: string, f: Filters): { shown: T | null; busy: boole
 
 function Customers({ f }: { f: Filters }) {
   const d = useDrill<Any[]>("customers", f);
+  const top = Math.max(1, ...(d.shown || []).map((r: Any) => r.REVENUE));
   return (
     <div className={"card" + (d.busy ? " busy" : "")} data-panel="customers" data-busy={d.busy ? "1" : "0"}>
-      <h3>Top customers in the selection</h3>
-      <span className="state">{d.busy ? `Querying Snowflake…${d.elapsed ? ` ${d.elapsed}s` : ""}` : ""}</span>
+      <Head icon="workspace_premium" color={MEASURE} title="Top customers in the selection" cap="Live query on 1.5M orders" state={querying(d.busy, d.elapsed)} />
       <div className="body">
         {d.error ? <div className="err">{d.error}</div> : !d.shown ? <div className="hint">Loading…</div> : (
-          <table>
-            <thead><tr><th>Customer</th><th>Nation</th><th>Segment</th><th className="n">Orders</th><th className="n">Revenue</th></tr></thead>
-            <tbody>{d.shown.map((r: Any) => (
-              <tr key={r.CUSTOMER}><td>{r.CUSTOMER}</td><td>{r.NATION}</td><td>{r.SEGMENT}</td>
-                <td className="n">{int.format(r.ORDERS)}</td><td className="n">{money(r.REVENUE)}</td></tr>))}
+          <div className="tw"><table>
+            <thead><tr><th></th><th>Customer</th><th>Nation</th><th>Segment</th><th className="n">Orders</th><th className="n">Revenue</th></tr></thead>
+            <tbody>{d.shown.map((r: Any, i: number) => (
+              <tr key={r.CUSTOMER}><th className="rk" scope="row">{i + 1}</th><td>{r.CUSTOMER}</td><td>{r.NATION}</td>
+                <td><Dot color={HUE.segment} /> {r.SEGMENT}</td>
+                <td className="n">{int.format(r.ORDERS)}</td>
+                <td className="n rev"><i style={{ width: `calc(${(100 * r.REVENUE) / top}% - 20px)` }} /><span>{money(r.REVENUE)}</span></td></tr>))}
             </tbody>
-          </table>)}
+          </table></div>)}
       </div>
     </div>
   );
@@ -142,20 +225,21 @@ function ShipModes({ f }: { f: Filters }) {
   const option = useMemo(() => {
     const rows = d.shown || [];
     return {
-      animation: false,
+      ...MOTION,
       grid: { left: 70, right: 48, top: 8, bottom: 24 },
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-      xAxis: { type: "value", axisLabel: { fontSize: 10, formatter: (v: number) => money(v) }, splitLine: { lineStyle: { color: "#f1f5f9" } } },
-      yAxis: { type: "category", data: rows.map((r: Any) => r.SHIP_MODE), inverse: true, axisLabel: { fontSize: 11 } },
-      series: [{ type: "bar", data: rows.map((r: Any) => r.REVENUE), itemStyle: { color: BLUE }, barMaxWidth: 22,
-                 label: { show: true, position: "right", fontSize: 10, formatter: (p: Any) => `${rows[p.dataIndex]?.LATE_PCT}% late` } }],
+      xAxis: { type: "value", axisLabel: { formatter: (v: number) => money(v) } },
+      yAxis: { type: "category", data: rows.map((r: Any) => r.SHIP_MODE), inverse: true },
+      series: [{ type: "bar", data: rows.map((r: Any) => r.REVENUE), barMaxWidth: 20,
+                 itemStyle: { borderRadius: [0, 5, 5, 0], color: { type: "linear", x: 0, y: 0, x2: 1, y2: 0, colorStops: [
+                   { offset: 0, color: MEASURE }, { offset: 1, color: "#29B5E8" }] } },
+                 label: { show: true, position: "right", fontSize: 11, color: MUTE, formatter: (p: Any) => `${rows[p.dataIndex]?.LATE_PCT}% late` } }],
     };
   }, [d.shown]);
   return (
     <div className={"card" + (d.busy ? " busy" : "")} data-panel="shipmodes" data-busy={d.busy ? "1" : "0"}>
-      <h3>Line revenue by ship mode (6M line items)</h3>
-      <span className="state">{d.busy ? `Querying Snowflake…${d.elapsed ? ` ${d.elapsed}s` : ""}` : ""}</span>
-      <div className="body">{d.error ? <div className="err">{d.error}</div> : <EChart name="shipmodes" option={option} height={230} />}</div>
+      <Head icon="local_shipping" color={MEASURE} title="Line revenue by ship mode" cap="Live query on 6M line items, with the late share" state={querying(d.busy, d.elapsed)} />
+      <div className="body">{d.error ? <div className="err">{d.error}</div> : <EChart name="shipmodes" option={option} height={360} />}</div>
     </div>
   );
 }
@@ -164,32 +248,93 @@ function ShipModes({ f }: { f: Filters }) {
 function Dashboard({ c, runs }: { c: Cube; runs: number }) {
   const s = useStore();
   const [f, setF] = useFilters(c);
+  const fRef = useRef(f);
+  fRef.current = f;
   const res = useMemo(() => aggregate(c, f), [c, f]);
+  const all = useMemo(() => aggregate(c, allMonths(c)), [c]);
+  const regionOf = useMemo(() => Object.fromEntries(c.nations.map((n) => [n.nation, n.region])), [c]);
   const regionOrder = useMemo(() => [...new Set(c.nations.map((n) => n.region))].sort(), [c]);
+  const lastMonth = c.months.length - 1;
 
-  const pick = (d: Dim, v: string) => {
-    const next = { ...f, [d]: f[d] === v ? null : v } as Filters;
-    if (d === "region" && next.region == null) next.nation = null;       // a nation belongs to a region
-    if (d === "region" && next.region && next.nation &&
-        c.nations.find((n) => n.nation === next.nation)?.region !== next.region) next.nation = null;
-    setF(next);
+  // A nation belongs to a region: picking another region drops the nation.
+  const withPick = (base: Filters, d: Dim, v: string | null): Filters => {
+    const next = { ...base, [d]: v } as Filters;
+    if (d === "region" && (v == null || (next.nation && regionOf[next.nation] !== v))) next.nation = null;
+    return next;
   };
-  const onBar = (d: Dim) => (type: string, e: Any) => { if (type === "click" && e?.name) pick(d, e.name); };
-  const onBrush = (type: string, e: Any) => {
-    if (type !== "brushEnd") return;
-    const range = e?.areas?.[0]?.coordRange;
-    if (!range) { if (f.first !== 0 || f.last !== c.months.length - 1) setF({ ...f, first: 0, last: c.months.length - 1 }); return; }
-    const first = Math.max(0, Math.round(range[0])), last = Math.min(c.months.length - 1, Math.round(range[1]));
-    if (first !== f.first || last !== f.last) setF({ ...f, first, last });
+  const pick = (d: Dim, v: string) => setF(withPick(f, d, f[d] === v ? null : v));
+
+  // ---- hover preview, coalesced to one update per animation frame
+  const [hover, setHover] = useState<{ dim: Dim; value: string } | null>(null);
+  const hoverNext = useRef<typeof hover>(null), hoverRaf = useRef(0);
+  const hoverSoon = (h: typeof hover) => {
+    hoverNext.current = h;
+    if (!hoverRaf.current) hoverRaf.current = requestAnimationFrame(() => {
+      hoverRaf.current = 0;
+      const n = hoverNext.current;
+      setHover((p) => (p?.dim === n?.dim && p?.value === n?.value ? p : n));
+    });
+  };
+  const preview: Preview | null = useMemo(() => {
+    if (!hover || f[hover.dim] === hover.value) return null;
+    return { label: hover.value, color: HUE[hover.dim], result: aggregate(c, withPick(f, hover.dim, hover.value)) };
+  }, [hover, f, c]);
+  const previewFor = (d: Dim) => (preview && hover && hover.dim !== d ? { totals: preview.result[d], color: preview.color } : null);
+
+  const onBar = (d: Dim) => (type: ChartEvent, e: Any) => {
+    if (type === "click" && e?.name) pick(d, e.name);
+    else if (type === "over" && e?.componentType === "series" && e.seriesIndex === 0 && e.name) hoverSoon({ dim: d, value: e.name });
+    else if (type === "out") hoverSoon(null);
+  };
+
+  // ---- time series: the dashboard follows the brush while it is dragged
+  const dragging = useRef(false), quiet = useRef(false);
+  const liveRange = useRef<[number, number] | null>(null), liveRaf = useRef(0);
+  const [, setDragDone] = useState(0);
+  const toRange = (e: Any): [number, number] | null => {
+    const r = e?.areas?.[0]?.coordRange;
+    return r ? [Math.max(0, Math.round(r[0])), Math.min(lastMonth, Math.round(r[1]))] : null;
+  };
+  const applyRange = ([first, last]: [number, number]) => {
+    const cur = fRef.current;
+    if (first !== cur.first || last !== cur.last) setF({ ...cur, first, last });
+  };
+  const onBrush = (type: ChartEvent, e: Any) => {
+    if (quiet.current) return;                         // our own dispatch below
+    if (type === "brush") {
+      const r = toRange(e);
+      if (!r) return;
+      dragging.current = true;
+      liveRange.current = r;
+      if (!liveRaf.current) liveRaf.current = requestAnimationFrame(() => {
+        liveRaf.current = 0;
+        if (dragging.current && liveRange.current) applyRange(liveRange.current);
+      });
+    } else if (type === "brushEnd") {
+      dragging.current = false;
+      applyRange(toRange(e) || [0, lastMonth]);
+      setDragDone((n) => n + 1);                       // redraw the series once the drag ends
+    }
   };
   // Keep the brush on the time series in step with the filter (cleared by Esc or a chip).
   const brushSetup = (chart: Any) => {
-    chart.dispatchAction({ type: "takeGlobalCursor", key: "brush", brushOption: { brushType: "lineX", brushMode: "single" } });
-    const whole = f.first === 0 && f.last === c.months.length - 1;
-    chart.dispatchAction({ type: "brush", areas: whole ? [] : [{ brushType: "lineX", xAxisIndex: 0, coordRange: [f.first, f.last] }] });
+    const ff = fRef.current, whole = ff.first === 0 && ff.last === lastMonth;
+    quiet.current = true;
+    chart.dispatchAction({ type: "takeGlobalCursor", key: "brush", brushOption: { brushType: "lineX", brushMode: "single" } }, { silent: true });
+    chart.dispatchAction({ type: "brush", areas: whole ? [] : [{ brushType: "lineX", xAxisIndex: 0, coordRange: [ff.first, ff.last] }] }, { silent: true });
+    quiet.current = false;
   };
+  // The series ignores the month filter, so it only redraws when another filter or the
+  // preview changes, never mid-drag (redrawing would reset the brush under the pointer).
+  const monthlyValues = useMemo(() => res.monthly, [c, f.region, f.nation, f.segment, f.priority]);
+  const monthlyPreview = dragging.current ? null : preview;
+  const rangeKey = useRef("");
+  if (!dragging.current) rangeKey.current = `${f.first}-${f.last}`;
+  const monthlyOption = useMemo(() => monthly(c, monthlyValues, monthlyPreview), [monthlyValues, monthlyPreview, rangeKey.current]);
+
   const clear = () => setF(allMonths(c));
 
+  useEffect(() => inputCommitted());
   useEffect(() => {
     if (W.__ibiKeys) W.removeEventListener("keydown", W.__ibiKeys);
     W.__ibiKeys = (e: KeyboardEvent) => {
@@ -199,50 +344,81 @@ function Dashboard({ c, runs }: { c: Cube; runs: number }) {
     W.addEventListener("keydown", W.__ibiKeys);
   });
 
-  const chips = [
-    ...(f.first !== 0 || f.last !== c.months.length - 1 ? [["months", `${c.months[f.first]} to ${c.months[f.last]}`]] : []),
-    ...DIMS.filter((d) => f[d] != null).map((d) => [d, `${d[0].toUpperCase() + d.slice(1)}: ${f[d]}`]),
+  const chips: [Dim | "months", string][] = [
+    ...(f.first !== 0 || f.last !== lastMonth ? [["months", `${c.months[f.first]} to ${c.months[f.last]}`] as [Dim | "months", string]] : []),
+    ...DIMS.filter((d) => f[d] != null).map((d) => [d, `${d[0].toUpperCase() + d.slice(1)}: ${f[d]}`] as [Dim, string]),
   ];
-  const removeChip = (k: string) => setF(k === "months" ? { ...f, first: 0, last: c.months.length - 1 }
-    : k === "region" ? { ...f, region: null, nation: null } : ({ ...f, [k]: null } as Filters));
+  const removeChip = (k: Dim | "months") => setF(k === "months" ? { ...f, first: 0, last: lastMonth } : withPick(f, k, null));
 
-  const nations = useMemo(() => {
-    const t: Totals = {};
-    for (const [k, v] of Object.entries(res.nation)) t[k] = v;
-    return t;
-  }, [res]);
+  // ---- KPI context: share of the whole, or what the hovered member would show
+  const share = (part: number, whole: number, what: string) =>
+    isAll(f, c) ? `all ${what}, 1992 to 1998` : `${pct((100 * part) / (whole || 1))} of all ${what}`;
+  const ctx = (now: string, pv: (r: Result) => string) => preview
+    ? <span style={{ color: shade(preview.color, 0.8) }}><b>{preview.label}</b>: {pv(preview.result)}</span>
+    : now;
+  const k = res.kpi, a = all.kpi;
+  const kpis = [
+    { id: "orders", label: "Orders", icon: "receipt_long", color: "#29B5E8", value: k.orders, fmt: (v: number) => int.format(v),
+      ctx: ctx(share(k.orders, a.orders, "orders"), (r) => count(r.kpi.orders) + " orders") },
+    { id: "revenue", label: "Revenue", icon: "payments", color: MEASURE, value: k.revenue, fmt: money,
+      ctx: ctx(share(k.revenue, a.revenue, "revenue"), (r) => money(r.kpi.revenue)) },
+    { id: "aov", label: "Avg order value", icon: "shopping_bag", color: MEASURE, value: k.aov, fmt: (v: number) => "$" + int.format(v),
+      ctx: ctx(isAll(f, c) ? `per order, across ${count(a.orders)} orders` : `vs $${int.format(a.aov)} across all orders`, (r) => "$" + int.format(r.kpi.aov)) },
+    { id: "urgent_pct", label: "Urgent share", icon: "priority_high", color: HUE.priority, value: k.urgent_pct, fmt: pct,
+      ctx: ctx(isAll(f, c) ? "of orders are 1-URGENT" : `vs ${pct(a.urgent_pct)} across all orders`, (r) => pct(r.kpi.urgent_pct)) },
+  ];
+
+  const ICON: Record<Dim | "months", string> = { months: "monitoring", region: "public", nation: "flag", segment: "category", priority: "bolt" };
+  const card = (cls: string, d: Dim | "months", title: string, cap: string, chart: React.ReactNode) => (
+    <div className={"card " + cls}><Head icon={ICON[d]} color={HUE[d]} title={title} cap={cap} />{chart}</div>
+  );
+  const tap = "Click to filter, hover to preview";
 
   return (
     <div className="ibi">
-      <div className="top">
-        <h1>Orders, 1992 to 1998</h1>
-        <span className="sub">TPC-H SF1 sample data, complete months: {int.format(c.m.length)}-row order cube, filtered in the browser</span>
-        <span className="meter" data-testid="meter" title="Clicks and brushing never rerun Python. Reruns come from the two drill-down queries (one per request and per poll).">
-          Python reruns: <b data-runs={runs}>{runs}</b> · last update: <b data-latency={s.latency ?? ""}>{s.latency != null ? s.latency + " ms" : "–"}</b>
-        </span>
+      <div className="hdr">
+        <div className="logo"><Icon name="bolt" /></div>
+        <div>
+          <h1>Instant BI</h1>
+          <div className="sub">TPC-H orders, 1992 to 1998 · a {int.format(c.m.length)}-row cube, filtered in your browser</div>
+        </div>
+        <div className="meter" data-testid="meter" title="Clicks, drags and hovers never rerun Python. Reruns come from the two drill-down queries (one per request and per poll).">
+          <span><Icon name="replay" />Python reruns <b data-runs={runs}>{runs}</b></span>
+          <span><Icon name="timer" />Response <b data-latency={s.latency ?? ""}>{s.latency != null ? s.latency + " ms" : "–"}</b></span>
+        </div>
       </div>
-      <div className="chips">
-        {chips.length ? chips.map(([k, label]) => <button key={k} className="chip" onClick={() => removeChip(k)}>{label} ×</button>)
-          : <span className="hint">Click a bar or drag across the time series to filter. Esc clears.</span>}
-        {!isAll(f, c) && <button className="chip clear" onClick={clear}>Clear all</button>}
+      <div className="ctl">
+        <Icon name="filter_alt" />
+        <div className="chips">
+          {chips.length ? chips.map(([key, label]) => (
+            <button key={key} className="chip" onClick={() => removeChip(key)} aria-label={`Remove filter ${label}`} title="Remove this filter"
+                    style={{ borderColor: tint(HUE[key], 0.6), background: tint(HUE[key], 0.12) }}>
+              <Dot color={HUE[key]} />{label}<span className="mi x" aria-hidden="true">close</span>
+            </button>))
+            : <span className="hint"><b>Click</b> a bar to filter, <b>hover</b> to preview, <b>drag</b> across the months to pick a range. Esc clears.</span>}
+          {!isAll(f, c) && <button className="chip clear" onClick={clear}>Clear all</button>}
+        </div>
       </div>
       <div className="kpis">
-        <div className="kpi" data-kpi="orders"><div className="k">Orders</div><div className="v"><Tween value={res.kpi.orders} format={(v) => int.format(v)} /></div></div>
-        <div className="kpi" data-kpi="revenue"><div className="k">Revenue</div><div className="v"><Tween value={res.kpi.revenue} format={money} /></div></div>
-        <div className="kpi" data-kpi="aov"><div className="k">Avg order value</div><div className="v"><Tween value={res.kpi.aov} format={(v) => "$" + int.format(v)} /></div></div>
-        <div className="kpi" data-kpi="urgent_pct"><div className="k">Urgent share</div><div className="v"><Tween value={res.kpi.urgent_pct} format={pct} /></div></div>
+        {kpis.map((x) => (
+          <div className="kpi" data-kpi={x.id} key={x.id}
+               style={{ background: `radial-gradient(320px 140px at 100% 0%, ${tint(x.color, 0.12)}, transparent 70%), #fff` }}>
+            <div className="k"><Chip icon={x.icon} color={x.color} />{x.label}</div>
+            <div className="v"><Tween value={x.value} format={x.fmt} /></div>
+            <div className="ctx" data-ctx={x.id}>{x.ctx}</div>
+          </div>))}
       </div>
       <div className="grid">
-        <div className="card wide"><h3>Monthly revenue (drag to select a range)</h3>
-          <EChart name="monthly" option={useMemo(() => monthly(c, res.monthly, f), [res, f])} height={200} onEvent={onBrush} setup={brushSetup} /></div>
-        <div className="card third"><h3>Region</h3>
-          <EChart name="region" option={useMemo(() => bars("Region", res.region, f.region, regionOrder), [res, f.region])} height={190} onEvent={onBar("region")} /></div>
-        <div className="card third"><h3>Market segment</h3>
-          <EChart name="segment" option={useMemo(() => bars("Segment", res.segment, f.segment, c.segments), [res, f.segment])} height={190} onEvent={onBar("segment")} /></div>
-        <div className="card third"><h3>Order priority</h3>
-          <EChart name="priority" option={useMemo(() => bars("Priority", res.priority, f.priority, c.priorities), [res, f.priority])} height={190} onEvent={onBar("priority")} /></div>
-        <div className="card wide"><h3>Nation{f.region ? ` in ${f.region}` : ""}</h3>
-          <EChart name="nation" option={useMemo(() => bars("Nation", nations, f.nation, undefined, 40), [nations, f.nation])} height={230} onEvent={onBar("nation")} /></div>
+        {card("wide", "months", "Monthly revenue", "Drag across the months to pick a range; the dashboard follows as you drag",
+          <EChart name="monthly" option={monthlyOption} height={200} onEvent={onBrush} setup={brushSetup} />)}
+        {card("third", "region", "Region", tap,
+          <EChart name="region" option={useMemo(() => bars("Region", res.region, f.region, HUE.region, previewFor("region"), regionOrder), [res, f.region, preview])} height={190} onEvent={onBar("region")} />)}
+        {card("third", "segment", "Market segment", tap,
+          <EChart name="segment" option={useMemo(() => bars("Segment", res.segment, f.segment, HUE.segment, previewFor("segment"), c.segments), [res, f.segment, preview])} height={190} onEvent={onBar("segment")} />)}
+        {card("third", "priority", "Order priority", tap,
+          <EChart name="priority" option={useMemo(() => bars("Priority", res.priority, f.priority, HUE.priority, previewFor("priority"), c.priorities), [res, f.priority, preview])} height={190} onEvent={onBar("priority")} />)}
+        {card("wide", "nation", `Nation${f.region ? ` in ${f.region}` : ""}`, f.region ? tap : `${tap}; pick a region to narrow the list`,
+          <EChart name="nation" option={useMemo(() => bars("Nation", res.nation, f.nation, HUE.nation, previewFor("nation"), undefined, 40), [res, f.nation, preview])} height={230} onEvent={onBar("nation")} />)}
         <Customers f={f} />
         <ShipModes f={f} />
       </div>

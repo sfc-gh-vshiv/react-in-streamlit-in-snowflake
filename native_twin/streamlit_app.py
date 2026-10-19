@@ -26,7 +26,16 @@ st.session_state.setdefault("full_runs", 0)
 st.session_state.setdefault("fragment_runs", 0)
 st.session_state["full_runs"] += 1
 
-BLUE, NAVY, MUTED = "#29B5E8", "#11567F", "#94a3b8"
+# The same colors as the React version: one hue per dimension, Mid Blue for measures.
+MEASURE = "#11567F"
+HUE = {"region": "#29B5E8", "nation": "#29B5E8", "segment": "#FF9F36", "priority": "#7D44CF"}
+
+
+def tint(hex_: str, t: float) -> str:
+    """Mix a color toward white (t = how much of the color is kept)."""
+    return "#" + "".join(f"{round(255 + (int(hex_[i:i + 2], 16) - 255) * t):02x}" for i in (1, 3, 5))
+
+
 SVG = {"embedOptions": {"renderer": "svg"}}       # DOM marks, so a test can click and observe them
 MONEY = alt.Axis(labelExpr="datum.value >= 1e9 ? '$' + format(datum.value / 1e9, '.1f') + 'B' : '$' + format(datum.value / 1e6, '.0f') + 'M'")
 
@@ -54,6 +63,11 @@ def cube_frame(version: str) -> pd.DataFrame:
     return frame.frame(cube())          # decoded once per cube version
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def overall_kpi(version: str) -> dict:
+    return frame.aggregate(cube_frame(version), tpch.Filters())["kpi"]   # the KPI context line
+
+
 @st.cache_data(ttl=3600, max_entries=256, show_spinner=False)
 def top_customers(f: tpch.Filters) -> pd.DataFrame:
     return session().sql(tpch.TOP_CUSTOMERS_SQL, params=tpch.params(f)).to_pandas()
@@ -76,7 +90,7 @@ def bar_chart(totals: dict, dim: str, order: list[str] | None, height: int, rota
             .mark_bar(cursor="pointer")
             .encode(x=alt.X(f"{dim}:N", sort=sort, title=None, axis=alt.Axis(labelAngle=-40 if rotate else 0, labelLimit=100)),
                     y=alt.Y("revenue:Q", title=None, axis=MONEY),
-                    color=alt.condition(sel, alt.value(BLUE), alt.value(MUTED)),
+                    color=alt.condition(sel, alt.value(tint(HUE[dim], 0.85)), alt.value(tint(HUE[dim], 0.3))),
                     tooltip=[alt.Tooltip(f"{dim}:N"), alt.Tooltip("revenue:Q", format=",.0f")])
             .add_params(sel)
             .properties(usermeta=SVG))
@@ -154,18 +168,24 @@ def dashboard():
     if not active:
         chips.caption("Click a bar or drag across the time series to filter.")
 
-    kpi = res["kpi"]
+    kpi, whole = res["kpi"], overall_kpi(c["version"])
+    share = (lambda part, total, what: f"all {what}, 1992 to 1998" if not active
+             else f"{100 * part / (total or 1):.1f}% of all {what}")
     cols = st.container(key="c_kpis").columns(4)
-    cols[0].metric("Orders", f"{kpi['orders']:,}", border=True)
-    cols[1].metric("Revenue", money(kpi["revenue"]), border=True)
-    cols[2].metric("Avg order value", f"${kpi['aov']:,.0f}", border=True)
-    cols[3].metric("Urgent share", f"{kpi['urgent_pct']:.1f}%", border=True)
+    for col, label, value, context in (
+            (cols[0], "Orders", f"{kpi['orders']:,}", share(kpi["orders"], whole["orders"], "orders")),
+            (cols[1], "Revenue", money(kpi["revenue"]), share(kpi["revenue"], whole["revenue"], "revenue")),
+            (cols[2], "Avg order value", f"${kpi['aov']:,.0f}", f"${whole['aov']:,.0f} across all orders"),
+            (cols[3], "Urgent share", f"{kpi['urgent_pct']:.1f}%", f"{whole['urgent_pct']:.1f}% across all orders")):
+        with col.container(border=True):
+            st.metric(label, value)
+            st.caption(context)
 
     with st.container(border=True, key="c_months"):
         st.caption("Monthly revenue (drag to select a range)")
         months = pd.DataFrame({"month": LABELS, "revenue": res["monthly"]})
         brush = alt.selection_interval(encodings=["x"], name="months")
-        line = (alt.Chart(months, height=200).mark_area(line={"color": NAVY}, color="rgba(41,181,232,0.10)")
+        line = (alt.Chart(months, height=200).mark_area(line={"color": MEASURE}, color="rgba(17,86,127,0.10)")
                 .encode(x=alt.X("month:O", title=None, axis=alt.Axis(labelAngle=0, values=[m for m in months.month if m.endswith("-01")])),
                         y=alt.Y("revenue:Q", title=None, axis=MONEY),
                         tooltip=["month", alt.Tooltip("revenue:Q", format=",.0f")])
@@ -194,7 +214,7 @@ def dashboard():
         st.caption("Line revenue by ship mode (6M line items)")
         with st.spinner("Querying Snowflake..."):
             s = ship_modes(f)
-        st.altair_chart(alt.Chart(s, height=230).mark_bar(color=BLUE)
+        st.altair_chart(alt.Chart(s, height=230).mark_bar(color=MEASURE)
                         .encode(y=alt.Y("SHIP_MODE:N", title=None), x=alt.X("REVENUE:Q", title=None, axis=MONEY),
                                 tooltip=["SHIP_MODE", alt.Tooltip("REVENUE:Q", format=",.0f"), "LATE_PCT"])
                         .properties(usermeta=SVG))

@@ -17,6 +17,7 @@ export const options = {
   charset: "ascii",          // the bundle travels base64-encoded; keep it plain ASCII
   target: "es2020",
   legalComments: "none",
+  loader: { ".woff2": "dataurl" },   // the font ships inside the bundle: nothing is fetched
   define: {
     "process.env.NODE_ENV": '"production"',
     __SL_VERSION__: JSON.stringify(pkg.version),

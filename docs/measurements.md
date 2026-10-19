@@ -24,8 +24,11 @@ harness treats both apps the same:
   "Charts" ends at the last DOM change in the KPI tiles and the five main charts, once
   300 ms pass with no further change in them. "Settled" also covers the drill-down panels,
   and waits for no Streamlit run in progress.
-- **No animation counted.** React's KPI numbers ease to their new value; the harness reads
-  the value attribute set at render, not the easing. ECharts animation is off.
+- **No animation counted.** The React app animates changes (250 ms) unless the browser asks
+  for reduced motion, and the harness asks for it (`reducedMotion: "reduce"`), so each chart's
+  first frame after an input is its final picture. KPI numbers expose the value set at render
+  (`data-value`), so the easing never counts. With motion on, the transition starts at the
+  same moment these numbers report.
 - **Fresh sessions.** Each run opens a new page (a new Streamlit session): 5 runs per app,
   4 interactions per run, medians reported.
 
@@ -33,12 +36,12 @@ harness treats both apps the same:
 
 | Interaction | React: charts | Native: charts | Python runs per input, React | Python runs per input, native |
 |---|---:|---:|---:|---:|
-| Click a region bar | **54 ms** | 347 ms | 0 (charts) + 3 (drill-downs) | 1 |
-| Click a segment bar | **20 ms** | 336 ms | 0 + 3 | 1 |
-| Brush 1994-01 to 1996-01 | **212 ms** | 316 ms | 0 + 3 | 1 |
-| Clear all | **21 ms** | 200 ms | 0 | 1 |
+| Click a region bar | **23 ms** | 359 ms | 0 (charts) + 3 (drill-downs) | 1 |
+| Click a segment bar | **14 ms** | 351 ms | 0 + 3 | 1 |
+| Brush 1994-01 to 1996-01 | **8 ms** | 335 ms | 0 + 3 | 1 |
+| Clear all | **18 ms** | 221 ms | 0 | 1 |
 
-Drill-downs: React shows the new top customers and ship modes about 1.5 s after the input
+Drill-downs: React shows the new top customers and ship modes 1.4 to 1.7 s after the input
 (median "settled"), while the charts have long finished. The twin's drill-downs look instant
 in this run because `st.cache_data` is shared by every session in the process and earlier runs
 had warmed it. The React app keeps background results per session on purpose (one viewer's
@@ -55,9 +58,16 @@ warehouse. The warehouse affects only the drill-downs: the chart timings involve
   and Python and no page CSP. In Streamlit in Snowflake every Python rerun crosses the
   network, which adds to the twin's per-input cost and not to the React charts, which never
   call Python. Deployed numbers are reported separately, labelled as such.
-- **The brush costs React more than a click** (212 ms): ECharts' brush applies its selection
-  on release with a short debounce (80 ms in this app), and the time series redraws a
-  79-point area.
+- **The brush is timed from the release, and React has done the work by then.** The React
+  dashboard follows the brush while it is dragged (one update per animation frame), so the
+  release only commits a range that is already on screen. The twin's selection reaches Python
+  when the pointer pauses or is released (Streamlit debounces it; in a separate check, 3 s of
+  continuous dragging caused no rerun, and a 600 ms pause caused one), so in this drag, which
+  releases without pausing, its 335 ms starts at the release. The comparison is fair to the
+  input both apps share; it does not credit React for the frames it drew during the drag.
+- **Not measured: hover.** The React app previews a hovered bar's slice across the other
+  charts and the KPIs, with no Python involved. The twin has no equivalent (a pointer move
+  does not reach Python), so there is nothing to compare.
 - **One dashboard, one data size.** The cube is about 49,000 rows (1 MB of JSON, sent once per
   session). A much larger cube would shift work to the browser and to the first load.
 - **Not a verdict on Streamlit.** The twin is the right tool for many apps. React pays off when

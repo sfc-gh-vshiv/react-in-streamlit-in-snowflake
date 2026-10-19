@@ -42,7 +42,7 @@ renders blank. Tests: `frontend/test/islands.test.mjs` (H1), smoke test "rebuilt
 
 ## 3. Send the heavy things once
 
-The bundle (about 150 KB for the starter, 700 KB with ECharts) and the Instant BI cube (1 MB)
+The bundle (about 150 KB for the starter, 790 KB with ECharts and the embedded font) and the Instant BI cube (1 MB)
 would otherwise ride along with every rerun. The page reports which versions it holds; later
 reruns send a placeholder, and a changed bundle hash reaches open pages on their next rerun.
 Tests: `test_bundle_is_sent_once_per_session`, smoke test "bundle sent once".

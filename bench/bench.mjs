@@ -8,9 +8,11 @@
 //            300 ms pass with no further change in them.
 //   settled  the same, including the drill-down panels, with no Streamlit run in
 //            progress and every drill-down panel finished.
-// The React charts draw on canvas, so they mark each finished draw on an attribute
-// (data-render-seq), and KPI tiles expose their target value (data-value) so the
-// number tween does not count as work. The native charts use Vega's SVG renderer,
+// The React charts draw on canvas, so they mark the first frame drawn after each new
+// option on an attribute (data-render-seq), and KPI tiles expose their target value
+// (data-value) so the number tween does not count as work. Pages ask for reduced
+// motion, so the React app skips its 250 ms transitions and that first frame is the
+// final picture (with motion on, the transition starts at the same moment). The native charts use Vega's SVG renderer,
 // so their DOM changes directly. Each run starts from a fresh page (a new session).
 // Writes ../qa/bench-<label>.json and prints medians.
 import { chromium } from "playwright-core";
@@ -161,12 +163,12 @@ async function measure(page, cfg, step) {
 
 // ------------------------------------------------------------------ run
 const browser = await chromium.launch();
-const results = { label: LABEL, date: new Date().toISOString(), runs: RUNS, quietMs: QUIET, chromium: browser.version(), apps: {} };
+const results = { label: LABEL, date: new Date().toISOString(), runs: RUNS, quietMs: QUIET, reducedMotion: true, chromium: browser.version(), apps: {} };
 for (const [name, cfg] of Object.entries(APPS)) {
   cfg.name = name;
   results.apps[name] = { url: cfg.url, runs: [] };
   for (let run = 0; run < RUNS; run++) {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 1400 } });
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1400 }, reducedMotion: "reduce" });
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e)));
     page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
