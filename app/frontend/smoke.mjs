@@ -49,20 +49,20 @@ await page.goto(URL);
 await page.waitForSelector(".ibi .kpis", { timeout: 120000 });
 await idle();
 const total = await kpi("orders");
-check("dashboard renders all orders", total > 1_000_000, String(total));
+check("dashboard renders all deals", total > 1_000_000, String(total));
 if (SHOTS) await page.screenshot({ path: `${SHOTS}/instant-bi-start.png`, fullPage: true });
 
 // 1. Click a bar: KPIs and every chart update in the browser, with no Python rerun for the charts.
 const r0 = await runs();
-const europe = await barAt("region", "EUROPE");
-await page.mouse.click(europe.x, europe.y);
+const emea = await barAt("region", "EMEA");
+await page.mouse.click(emea.x, emea.y);
 // The rerun count is read in the same moment the new state shows, so a drill-down
 // query that starts afterwards (it waits 250 ms for the filters to settle) is not counted.
 const atUpdate = await page.waitForFunction(() => {
-  if (!/Region: EUROPE/.test(document.querySelector(".ibi .chips").innerText)) return false;
+  if (!/Region: EMEA/.test(document.querySelector(".ibi .chips").innerText)) return false;
   return { runs: +document.querySelector("[data-runs]").dataset.runs, orders: +document.querySelector("[data-kpi=orders] [data-value]").dataset.value };
 }, null, { timeout: 5000 }).then((h) => h.jsonValue()).catch(() => null);
-check("bar click sets the filter", (await chips()).some((c) => /Region: EUROPE/.test(c)));
+check("bar click sets the filter", (await chips()).some((c) => /Region: EMEA/.test(c)));
 const afterClick = atUpdate?.orders ?? 0;
 check("KPIs follow the filter", afterClick > 0 && afterClick < total, String(afterClick));
 check("charts updated without a Python rerun", atUpdate?.runs === r0, `runs ${r0} -> ${atUpdate?.runs}`);
@@ -74,15 +74,15 @@ check("drill-downs answered after the click", (await page.$$eval("[data-panel=cu
 // 2. Hover a bar: every other chart and the KPIs preview that member, without a rerun.
 await quiet();
 const rHover = await runs();
-const building = await barAt("segment", "BUILDING");
-await page.mouse.move(building.x, building.y);
-await page.waitForFunction(() => /BUILDING/.test(document.querySelector("[data-ctx=revenue]").innerText), null, { timeout: 3000 }).catch(() => {});
+const construction = await barAt("segment", "Construction");
+await page.mouse.move(construction.x, construction.y);
+await page.waitForFunction(() => /Construction/.test(document.querySelector("[data-ctx=revenue]").innerText), null, { timeout: 3000 }).catch(() => {});
 const overlay = await page.evaluate(() => window.__ibiCharts.region.getOption().series[1].data.length);
-check("hover previews the member in the KPIs", /BUILDING/.test(await page.$eval("[data-ctx=revenue]", (e) => e.innerText)));
+check("hover previews the member in the KPIs", /Construction/.test(await page.$eval("[data-ctx=revenue]", (e) => e.innerText)));
 check("hover overlays the member on other charts", overlay > 0, `${overlay} preview bars`);
 await page.mouse.move(5, 300);
-await page.waitForFunction(() => !/BUILDING/.test(document.querySelector("[data-ctx=revenue]").innerText), null, { timeout: 3000 }).catch(() => {});
-check("moving away clears the preview", !/BUILDING/.test(await page.$eval("[data-ctx=revenue]", (e) => e.innerText)));
+await page.waitForFunction(() => !/Construction/.test(document.querySelector("[data-ctx=revenue]").innerText), null, { timeout: 3000 }).catch(() => {});
+check("moving away clears the preview", !/Construction/.test(await page.$eval("[data-ctx=revenue]", (e) => e.innerText)));
 check("hovering never reruns Python", (await runs()) === rHover, `runs ${rHover} -> ${await runs()}`);
 
 // 3. Brush a range on the time series: the KPIs follow during the drag, before release.

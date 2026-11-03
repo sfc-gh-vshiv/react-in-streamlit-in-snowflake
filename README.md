@@ -9,7 +9,7 @@ This repo has three apps and the tooling around them:
 | Folder | What it is |
 |---|---|
 | [`starter/`](starter/) | A hardened hello-world template: one React island, one background query. Copy it to start. |
-| [`app/`](app/) | **Instant BI**: a cross-filtered dashboard over 1.5 million TPC-H orders, computed in the browser. |
+| [`app/`](app/) | **Instant BI**: a cross-filtered pipeline dashboard over 1.5 million synthetic deals, computed in the browser. |
 | [`native_twin/`](native_twin/) | The same dashboard in plain Streamlit, built the documented way, for comparison. |
 | [`bench/`](bench/) | One benchmark harness for both dashboards. |
 | [`skills/sis-to-react-in-sis/`](skills/sis-to-react-in-sis/) | A Cortex Code skill that builds or converts apps this way; its `assets/` is the starter. |
@@ -19,9 +19,17 @@ This repo has three apps and the tooling around them:
 ## Why
 
 In Instant BI a click on a bar updates four KPIs and five charts in about 8 to 25 ms, with no
-Python rerun, because the 49,000-row order cube is filtered in the browser. The native twin
-takes about 220 to 360 ms per interaction (one fragment rerun each). Both measured locally, same
+Python rerun, because the 49,000-row deal cube is filtered in the browser. The native twin
+takes about 220 to 350 ms per interaction (one fragment rerun each). Both measured locally, same
 input, same rules: see [measurements](docs/measurements.md) for the method and the caveats.
+
+## About the data
+
+The data is synthetic. Every query reads the TPC-H sample data (`SNOWFLAKE_SAMPLE_DATA.TPCH_SF1`) and maps
+it to a sales pipeline in SQL, in [`app/tpch.py`](app/tpch.py): orders become deals, order priority becomes
+deal stage (`1-Commit` to `5-Early`), market segment becomes industry, and the five TPC-H regions fold into
+AMER, EMEA and APAC. Dates move forward 28 years, so the data runs from 2020-01 to 2026-07. No customer data
+is involved, and the setup needs no new tables.
 
 ## Try it
 

@@ -1,4 +1,4 @@
-// Instant BI: cross-filtered TPC-H order analytics, computed in the browser.
+// Instant BI: cross-filtered pipeline analytics (synthetic, derived from the TPC-H sample), computed in the browser.
 // The cube arrives once per session (react_bridge.send_data); clicks, drags and hovers
 // never rerun Python. Python is asked only for the two drill-downs, which run as
 // background queries.
@@ -12,6 +12,7 @@ declare const __SL_VERSION__: string;
 
 const DIMS = ["region", "nation", "segment", "priority"] as const;
 type Dim = (typeof DIMS)[number];
+const LABEL: Record<Dim, string> = { region: "Region", nation: "Country", segment: "Industry", priority: "Stage" };
 
 // ------------------------------------------------------------------ palette
 // Color carries meaning: one hue per dimension (Snowflake brand, colorblind-safe set),
@@ -167,7 +168,7 @@ function monthly(c: Cube, values: number[], preview: Preview | null) {
     brush: { xAxisIndex: 0, brushType: "lineX", brushMode: "single", transformable: true, throttleType: "fixRate", throttleDelay: 30,
              brushStyle: { color: "rgba(17,86,127,.10)", borderColor: MEASURE } },
     series: [
-      { id: "revenue", name: "Revenue", type: "line", data: values, showSymbol: false, color: MEASURE, lineStyle: { color: MEASURE, width: 2.4 },
+      { id: "revenue", name: "Bookings", type: "line", data: values, showSymbol: false, color: MEASURE, lineStyle: { color: MEASURE, width: 2.4 },
         areaStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [
           { offset: 0, color: "rgba(41,181,232,.32)" }, { offset: 1, color: "rgba(41,181,232,.02)" }] } } },
       { id: "preview", name: preview?.label || "Preview", type: "line", silent: true, showSymbol: false, z: 3,
@@ -200,19 +201,19 @@ function useDrill<T>(action: string, f: Filters): { shown: T | null; busy: boole
 
 function Customers({ f }: { f: Filters }) {
   const d = useDrill<Any[]>("customers", f);
-  const top = Math.max(1, ...(d.shown || []).map((r: Any) => r.REVENUE));
+  const top = Math.max(1, ...(d.shown || []).map((r: Any) => r.BOOKINGS));
   return (
     <div className={"card" + (d.busy ? " busy" : "")} data-panel="customers" data-busy={d.busy ? "1" : "0"}>
-      <Head icon="workspace_premium" color={MEASURE} title="Top customers in the selection" cap="Live query on 1.5M orders" state={querying(d.busy, d.elapsed)} />
+      <Head icon="workspace_premium" color={MEASURE} title="Top accounts in the selection" cap="Live query on 1.5M deals" state={querying(d.busy, d.elapsed)} />
       <div className="body">
         {d.error ? <div className="err">{d.error}</div> : !d.shown ? <div className="hint">Loading…</div> : (
           <div className="tw"><table>
-            <thead><tr><th></th><th>Customer</th><th>Nation</th><th>Segment</th><th className="n">Orders</th><th className="n">Revenue</th></tr></thead>
+            <thead><tr><th></th><th>Account</th><th>Country</th><th>Industry</th><th className="n">Deals</th><th className="n">Bookings</th></tr></thead>
             <tbody>{d.shown.map((r: Any, i: number) => (
-              <tr key={r.CUSTOMER}><th className="rk" scope="row">{i + 1}</th><td>{r.CUSTOMER}</td><td>{r.NATION}</td>
-                <td><Dot color={HUE.segment} /> {r.SEGMENT}</td>
-                <td className="n">{int.format(r.ORDERS)}</td>
-                <td className="n rev"><i style={{ width: `calc(${(100 * r.REVENUE) / top}% - 20px)` }} /><span>{money(r.REVENUE)}</span></td></tr>))}
+              <tr key={r.ACCOUNT}><th className="rk" scope="row">{i + 1}</th><td>{r.ACCOUNT}</td><td>{r.COUNTRY}</td>
+                <td><Dot color={HUE.segment} /> {r.INDUSTRY}</td>
+                <td className="n">{int.format(r.DEALS)}</td>
+                <td className="n rev"><i style={{ width: `calc(${(100 * r.BOOKINGS) / top}% - 20px)` }} /><span>{money(r.BOOKINGS)}</span></td></tr>))}
             </tbody>
           </table></div>)}
       </div>
@@ -229,16 +230,16 @@ function ShipModes({ f }: { f: Filters }) {
       grid: { left: 70, right: 48, top: 8, bottom: 24 },
       tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
       xAxis: { type: "value", axisLabel: { formatter: (v: number) => money(v) } },
-      yAxis: { type: "category", data: rows.map((r: Any) => r.SHIP_MODE), inverse: true },
-      series: [{ type: "bar", data: rows.map((r: Any) => r.REVENUE), barMaxWidth: 20,
+      yAxis: { type: "category", data: rows.map((r: Any) => r.LEAD_SOURCE), inverse: true },
+      series: [{ type: "bar", data: rows.map((r: Any) => r.BOOKINGS), barMaxWidth: 20,
                  itemStyle: { borderRadius: [0, 5, 5, 0], color: { type: "linear", x: 0, y: 0, x2: 1, y2: 0, colorStops: [
                    { offset: 0, color: MEASURE }, { offset: 1, color: "#29B5E8" }] } },
-                 label: { show: true, position: "right", fontSize: 11, color: MUTE, formatter: (p: Any) => `${rows[p.dataIndex]?.LATE_PCT}% late` } }],
+                 label: { show: true, position: "right", fontSize: 11, color: MUTE, formatter: (p: Any) => `${rows[p.dataIndex]?.SLIPPED_PCT}% slipped` } }],
     };
   }, [d.shown]);
   return (
     <div className={"card" + (d.busy ? " busy" : "")} data-panel="shipmodes" data-busy={d.busy ? "1" : "0"}>
-      <Head icon="local_shipping" color={MEASURE} title="Line revenue by ship mode" cap="Live query on 6M line items, with the late share" state={querying(d.busy, d.elapsed)} />
+      <Head icon="local_shipping" color={MEASURE} title="Booked lines by lead source" cap="Live query on 6M line items, with the slipped share" state={querying(d.busy, d.elapsed)} />
       <div className="body">{d.error ? <div className="err">{d.error}</div> : <EChart name="shipmodes" option={option} height={360} />}</div>
     </div>
   );
@@ -346,26 +347,26 @@ function Dashboard({ c, runs }: { c: Cube; runs: number }) {
 
   const chips: [Dim | "months", string][] = [
     ...(f.first !== 0 || f.last !== lastMonth ? [["months", `${c.months[f.first]} to ${c.months[f.last]}`] as [Dim | "months", string]] : []),
-    ...DIMS.filter((d) => f[d] != null).map((d) => [d, `${d[0].toUpperCase() + d.slice(1)}: ${f[d]}`] as [Dim, string]),
+    ...DIMS.filter((d) => f[d] != null).map((d) => [d, `${LABEL[d]}: ${f[d]}`] as [Dim, string]),
   ];
   const removeChip = (k: Dim | "months") => setF(k === "months" ? { ...f, first: 0, last: lastMonth } : withPick(f, k, null));
 
   // ---- KPI context: share of the whole, or what the hovered member would show
   const share = (part: number, whole: number, what: string) =>
-    isAll(f, c) ? `all ${what}, 1992 to 1998` : `${pct((100 * part) / (whole || 1))} of all ${what}`;
+    isAll(f, c) ? `all ${what}, 2020 to 2026` : `${pct((100 * part) / (whole || 1))} of all ${what}`;
   const ctx = (now: string, pv: (r: Result) => string) => preview
     ? <span style={{ color: shade(preview.color, 0.8) }}><b>{preview.label}</b>: {pv(preview.result)}</span>
     : now;
   const k = res.kpi, a = all.kpi;
   const kpis = [
-    { id: "orders", label: "Orders", icon: "receipt_long", color: "#29B5E8", value: k.orders, fmt: (v: number) => int.format(v),
-      ctx: ctx(share(k.orders, a.orders, "orders"), (r) => count(r.kpi.orders) + " orders") },
-    { id: "revenue", label: "Revenue", icon: "payments", color: MEASURE, value: k.revenue, fmt: money,
-      ctx: ctx(share(k.revenue, a.revenue, "revenue"), (r) => money(r.kpi.revenue)) },
-    { id: "aov", label: "Avg order value", icon: "shopping_bag", color: MEASURE, value: k.aov, fmt: (v: number) => "$" + int.format(v),
-      ctx: ctx(isAll(f, c) ? `per order, across ${count(a.orders)} orders` : `vs $${int.format(a.aov)} across all orders`, (r) => "$" + int.format(r.kpi.aov)) },
-    { id: "urgent_pct", label: "Urgent share", icon: "priority_high", color: HUE.priority, value: k.urgent_pct, fmt: pct,
-      ctx: ctx(isAll(f, c) ? "of orders are 1-URGENT" : `vs ${pct(a.urgent_pct)} across all orders`, (r) => pct(r.kpi.urgent_pct)) },
+    { id: "orders", label: "Deals", icon: "receipt_long", color: "#29B5E8", value: k.orders, fmt: (v: number) => int.format(v),
+      ctx: ctx(share(k.orders, a.orders, "deals"), (r) => count(r.kpi.orders) + " deals") },
+    { id: "revenue", label: "Bookings", icon: "payments", color: MEASURE, value: k.revenue, fmt: money,
+      ctx: ctx(share(k.revenue, a.revenue, "bookings"), (r) => money(r.kpi.revenue)) },
+    { id: "aov", label: "Avg deal size", icon: "shopping_bag", color: MEASURE, value: k.aov, fmt: (v: number) => "$" + int.format(v),
+      ctx: ctx(isAll(f, c) ? `per deal, across ${count(a.orders)} deals` : `vs $${int.format(a.aov)} across all deals`, (r) => "$" + int.format(r.kpi.aov)) },
+    { id: "urgent_pct", label: "Commit share", icon: "priority_high", color: HUE.priority, value: k.urgent_pct, fmt: pct,
+      ctx: ctx(isAll(f, c) ? "of deals are at the Commit stage" : `vs ${pct(a.urgent_pct)} across all deals`, (r) => pct(r.kpi.urgent_pct)) },
   ];
 
   const ICON: Record<Dim | "months", string> = { months: "monitoring", region: "public", nation: "flag", segment: "category", priority: "bolt" };
@@ -380,7 +381,7 @@ function Dashboard({ c, runs }: { c: Cube; runs: number }) {
         <div className="logo"><Icon name="bolt" /></div>
         <div>
           <h1>Instant BI</h1>
-          <div className="sub">TPC-H orders, 1992 to 1998 · a {int.format(c.m.length)}-row cube, filtered in your browser</div>
+          <div className="sub">Synthetic pipeline from the TPC-H sample, 2020 to 2026 · a {int.format(c.m.length)}-row cube, filtered in your browser</div>
         </div>
         <div className="meter" data-testid="meter" title="Clicks, drags and hovers never rerun Python. Reruns come from the two drill-down queries (one per request and per poll).">
           <span><Icon name="replay" />Python reruns <b data-runs={runs}>{runs}</b></span>
@@ -409,16 +410,16 @@ function Dashboard({ c, runs }: { c: Cube; runs: number }) {
           </div>))}
       </div>
       <div className="grid">
-        {card("wide", "months", "Monthly revenue", "Drag across the months to pick a range; the dashboard follows as you drag",
+        {card("wide", "months", "Monthly bookings", "Drag across the months to pick a range; the dashboard follows as you drag",
           <EChart name="monthly" option={monthlyOption} height={200} onEvent={onBrush} setup={brushSetup} />)}
         {card("third", "region", "Region", tap,
           <EChart name="region" option={useMemo(() => bars("Region", res.region, f.region, HUE.region, previewFor("region"), regionOrder), [res, f.region, preview])} height={190} onEvent={onBar("region")} />)}
-        {card("third", "segment", "Market segment", tap,
-          <EChart name="segment" option={useMemo(() => bars("Segment", res.segment, f.segment, HUE.segment, previewFor("segment"), c.segments), [res, f.segment, preview])} height={190} onEvent={onBar("segment")} />)}
-        {card("third", "priority", "Order priority", tap,
-          <EChart name="priority" option={useMemo(() => bars("Priority", res.priority, f.priority, HUE.priority, previewFor("priority"), c.priorities), [res, f.priority, preview])} height={190} onEvent={onBar("priority")} />)}
-        {card("wide", "nation", `Nation${f.region ? ` in ${f.region}` : ""}`, f.region ? tap : `${tap}; pick a region to narrow the list`,
-          <EChart name="nation" option={useMemo(() => bars("Nation", res.nation, f.nation, HUE.nation, previewFor("nation"), undefined, 40), [res, f.nation, preview])} height={230} onEvent={onBar("nation")} />)}
+        {card("third", "segment", "Industry", tap,
+          <EChart name="segment" option={useMemo(() => bars("Industry", res.segment, f.segment, HUE.segment, previewFor("segment"), c.segments), [res, f.segment, preview])} height={190} onEvent={onBar("segment")} />)}
+        {card("third", "priority", "Deal stage", tap,
+          <EChart name="priority" option={useMemo(() => bars("Stage", res.priority, f.priority, HUE.priority, previewFor("priority"), c.priorities), [res, f.priority, preview])} height={190} onEvent={onBar("priority")} />)}
+        {card("wide", "nation", `Country${f.region ? ` in ${f.region}` : ""}`, f.region ? tap : `${tap}; pick a region to narrow the list`,
+          <EChart name="nation" option={useMemo(() => bars("Country", res.nation, f.nation, HUE.nation, previewFor("nation"), undefined, 40), [res, f.nation, preview])} height={230} onEvent={onBar("nation")} />)}
         <Customers f={f} />
         <ShipModes f={f} />
       </div>
@@ -428,7 +429,7 @@ function Dashboard({ c, runs }: { c: Cube; runs: number }) {
 
 function App(p: Any) {
   const c = data<Cube>("cube");
-  if (!c) return <div className="hint">Loading the order cube…</div>;
+  if (!c) return <div className="hint">Loading the deal cube…</div>;
   return <Dashboard c={c} runs={p.runs} />;
 }
 

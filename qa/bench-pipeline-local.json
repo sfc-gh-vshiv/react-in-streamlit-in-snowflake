@@ -1,0 +1,786 @@
+{
+  "label": "pipeline-local",
+  "date": "2026-11-03T04:33:40.385Z",
+  "runs": 5,
+  "quietMs": 300,
+  "reducedMotion": true,
+  "chromium": "156.0.8078.4",
+  "apps": {
+    "react": {
+      "url": "http://localhost:8602",
+      "runs": [
+        {
+          "run": 0,
+          "firstPaintMs": 540,
+          "loadedMs": 2431,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 23,
+              "settledMs": 1875,
+              "pythonRuns": 3,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 12,
+              "settledMs": 4068,
+              "pythonRuns": 4,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 8,
+              "settledMs": 5883,
+              "pythonRuns": 9,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 14,
+              "settledMs": 267,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 1,
+          "firstPaintMs": 529,
+          "loadedMs": 2391,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 22,
+              "settledMs": 1695,
+              "pythonRuns": 3,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 13,
+              "settledMs": 1687,
+              "pythonRuns": 3,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 8,
+              "settledMs": 1824,
+              "pythonRuns": 3,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 13,
+              "settledMs": 268,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 2,
+          "firstPaintMs": 496,
+          "loadedMs": 2273,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 22,
+              "settledMs": 1821,
+              "pythonRuns": 3,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 11,
+              "settledMs": 1696,
+              "pythonRuns": 3,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 8,
+              "settledMs": 1608,
+              "pythonRuns": 3,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 12,
+              "settledMs": 266,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 3,
+          "firstPaintMs": 529,
+          "loadedMs": 1973,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 21,
+              "settledMs": 2057,
+              "pythonRuns": 3,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 13,
+              "settledMs": 1876,
+              "pythonRuns": 3,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 9,
+              "settledMs": 2699,
+              "pythonRuns": 3,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 12,
+              "settledMs": 265,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 4,
+          "firstPaintMs": 499,
+          "loadedMs": 2558,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 20,
+              "settledMs": 1943,
+              "pythonRuns": 3,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 11,
+              "settledMs": 1602,
+              "pythonRuns": 3,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 8,
+              "settledMs": 1693,
+              "pythonRuns": 3,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 13,
+              "settledMs": 267,
+              "pythonRuns": 0,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    "native": {
+      "url": "http://localhost:8603",
+      "runs": [
+        {
+          "run": 0,
+          "firstPaintMs": 3940,
+          "loadedMs": 4167,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 284,
+              "settledMs": 603,
+              "pythonRuns": 1,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 270,
+              "settledMs": 562,
+              "pythonRuns": 1,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 251,
+              "settledMs": 522,
+              "pythonRuns": 1,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 215,
+              "settledMs": 215,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 1,
+          "firstPaintMs": 553,
+          "loadedMs": 577,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 364,
+              "settledMs": 364,
+              "pythonRuns": 1,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 337,
+              "settledMs": 337,
+              "pythonRuns": 1,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 318,
+              "settledMs": 318,
+              "pythonRuns": 1,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 216,
+              "settledMs": 216,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 2,
+          "firstPaintMs": 549,
+          "loadedMs": 575,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 351,
+              "settledMs": 351,
+              "pythonRuns": 1,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 326,
+              "settledMs": 326,
+              "pythonRuns": 1,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 308,
+              "settledMs": 308,
+              "pythonRuns": 1,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 222,
+              "settledMs": 222,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 3,
+          "firstPaintMs": 565,
+          "loadedMs": 582,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 365,
+              "settledMs": 365,
+              "pythonRuns": 1,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 323,
+              "settledMs": 323,
+              "pythonRuns": 1,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 322,
+              "settledMs": 322,
+              "pythonRuns": 1,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 221,
+              "settledMs": 221,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        },
+        {
+          "run": 4,
+          "firstPaintMs": 546,
+          "loadedMs": 575,
+          "resumeReloads": 0,
+          "steps": [
+            {
+              "step": "region EMEA",
+              "chartsMs": 344,
+              "settledMs": 344,
+              "pythonRuns": 1,
+              "kpis": [
+                "898,453",
+                "$135.8B",
+                "$151,151",
+                "20.1%"
+              ],
+              "topCustomer": "Account 000143500"
+            },
+            {
+              "step": "segment Construction",
+              "chartsMs": 344,
+              "settledMs": 344,
+              "pythonRuns": 1,
+              "kpis": [
+                "180,275",
+                "$27.2B",
+                "$151,048",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000131113"
+            },
+            {
+              "step": "brush 2022-01 to 2024-01",
+              "chartsMs": 316,
+              "settledMs": 316,
+              "pythonRuns": 1,
+              "kpis": [
+                "56,886",
+                "$8.6B",
+                "$150,967",
+                "19.9%"
+              ],
+              "topCustomer": "Account 000058216"
+            },
+            {
+              "step": "clear all",
+              "chartsMs": 222,
+              "settledMs": 222,
+              "pythonRuns": 1,
+              "kpis": [
+                "1,498,801",
+                "$226.6B",
+                "$151,219",
+                "20.0%"
+              ],
+              "topCustomer": "Account 000143500"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    }
+  },
+  "summary": {
+    "react": [
+      {
+        "step": "page load",
+        "chartsMs": 529,
+        "settledMs": 2391,
+        "pythonRuns": null
+      },
+      {
+        "step": "region EMEA",
+        "chartsMs": 22,
+        "settledMs": 1875,
+        "pythonRuns": 3
+      },
+      {
+        "step": "segment Construction",
+        "chartsMs": 12,
+        "settledMs": 1696,
+        "pythonRuns": 3
+      },
+      {
+        "step": "brush 2022-01 to 2024-01",
+        "chartsMs": 8,
+        "settledMs": 1824,
+        "pythonRuns": 3
+      },
+      {
+        "step": "clear all",
+        "chartsMs": 13,
+        "settledMs": 267,
+        "pythonRuns": 0
+      }
+    ],
+    "native": [
+      {
+        "step": "page load",
+        "chartsMs": 553,
+        "settledMs": 577,
+        "pythonRuns": null
+      },
+      {
+        "step": "region EMEA",
+        "chartsMs": 351,
+        "settledMs": 364,
+        "pythonRuns": 1
+      },
+      {
+        "step": "segment Construction",
+        "chartsMs": 326,
+        "settledMs": 337,
+        "pythonRuns": 1
+      },
+      {
+        "step": "brush 2022-01 to 2024-01",
+        "chartsMs": 316,
+        "settledMs": 318,
+        "pythonRuns": 1
+      },
+      {
+        "step": "clear all",
+        "chartsMs": 221,
+        "settledMs": 221,
+        "pythonRuns": 1
+      }
+    ]
+  },
+  "parity": [
+    {
+      "step": "region EMEA",
+      "pair": "react/native",
+      "kpisMatch": true,
+      "react": [
+        "898,453",
+        "$135.8B",
+        "$151,151",
+        "20.1%"
+      ],
+      "native": [
+        "898,453",
+        "$135.8B",
+        "$151,151",
+        "20.1%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Account 000143500",
+        "Account 000143500"
+      ]
+    },
+    {
+      "step": "segment Construction",
+      "pair": "react/native",
+      "kpisMatch": true,
+      "react": [
+        "180,275",
+        "$27.2B",
+        "$151,048",
+        "19.9%"
+      ],
+      "native": [
+        "180,275",
+        "$27.2B",
+        "$151,048",
+        "19.9%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Account 000131113",
+        "Account 000131113"
+      ]
+    },
+    {
+      "step": "brush 2022-01 to 2024-01",
+      "pair": "react/native",
+      "kpisMatch": true,
+      "react": [
+        "56,886",
+        "$8.6B",
+        "$150,967",
+        "19.9%"
+      ],
+      "native": [
+        "56,886",
+        "$8.6B",
+        "$150,967",
+        "19.9%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Account 000058216",
+        "Account 000058216"
+      ]
+    },
+    {
+      "step": "clear all",
+      "pair": "react/native",
+      "kpisMatch": true,
+      "react": [
+        "1,498,801",
+        "$226.6B",
+        "$151,219",
+        "20.0%"
+      ],
+      "native": [
+        "1,498,801",
+        "$226.6B",
+        "$151,219",
+        "20.0%"
+      ],
+      "topCustomerMatch": true,
+      "topCustomer": [
+        "Account 000143500",
+        "Account 000143500"
+      ]
+    }
+  ]
+}

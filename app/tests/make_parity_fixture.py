@@ -16,13 +16,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import tpch  # noqa: E402
 
 FIXTURE = Path(__file__).resolve().parents[1] / "frontend" / "test" / "parity_fixture.json"
-REGIONS = ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"]
-SEGMENTS = ["AUTOMOBILE", "BUILDING", "FURNITURE", "HOUSEHOLD", "MACHINERY"]
-PRIORITIES = ["1-URGENT", "2-HIGH", "3-MEDIUM", "4-NOT SPECIFIED", "5-LOW"]
+REGIONS = ["AMER", "APAC", "EMEA"]
+SEGMENTS = ["Automotive", "Construction", "Consumer", "Industrial", "Retail"]
+PRIORITIES = ["1-Commit", "2-Best case", "3-Pipeline", "4-Upside", "5-Early"]
 
 
 def synthetic_cube(rng: random.Random) -> dict:
-    nations = [{"n": i, "nation": f"NATION_{i:02d}", "region": REGIONS[i % 5]} for i in range(25)]
+    nations = [{"n": i, "nation": f"NATION_{i:02d}", "region": REGIONS[i % 3]} for i in range(25)]
     cols = {k: [] for k in "mnspor"}
     for m in range(tpch.MONTHS):
         for n in range(25):
@@ -38,9 +38,9 @@ def synthetic_cube(rng: random.Random) -> dict:
 
 
 def filter_states(rng: random.Random, cube: dict) -> list[tpch.Filters]:
-    states = [tpch.Filters(), tpch.Filters(first=10, last=10), tpch.Filters(region="ASIA"),
-              tpch.Filters(region="ASIA", nation="NATION_02"), tpch.Filters(segment="BUILDING", priority="1-URGENT"),
-              tpch.Filters(nation="NATION_02", region="EUROPE")]          # contradictory: nothing matches
+    states = [tpch.Filters(), tpch.Filters(first=10, last=10), tpch.Filters(region="APAC"),
+              tpch.Filters(region="EMEA", nation="NATION_02"), tpch.Filters(segment="Construction", priority="1-Commit"),
+              tpch.Filters(nation="NATION_02", region="AMER")]          # contradictory: nothing matches
     for _ in range(14):
         first = rng.randrange(tpch.MONTHS)
         states.append(tpch.Filters(

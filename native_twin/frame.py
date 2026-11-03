@@ -31,7 +31,7 @@ def aggregate(df: pd.DataFrame, f: tpch.Filters) -> dict:
         return {k: int(v) for k, v in df[mask].groupby(col).r.sum().items()}
     every = ok_m & ok_r & ok_n & ok_s & ok_p
     orders, revenue = int(df.o[every].sum()), int(df.r[every].sum())
-    urgent = int(df.o[every & (df.priority == "1-URGENT")].sum())
+    urgent = int(df.o[every & (df.priority == "1-Commit")].sum())
     monthly = df[ok_r & ok_n & ok_s & ok_p].groupby("m").r.sum().reindex(range(tpch.MONTHS), fill_value=0)
     return {
         "kpi": {"orders": orders, "revenue": revenue, "urgent": urgent,

@@ -1,4 +1,4 @@
-// Cross-filtering over the order cube, in the browser. This mirrors aggregate() in
+// Cross-filtering over the deal cube, in the browser. This mirrors aggregate() in
 // tpch.py line for line; test/parity.test.mjs checks they agree on the same cube.
 export type Cube = {
   m: number[]; n: number[]; s: number[]; p: number[]; o: number[]; r: number[];
@@ -25,7 +25,7 @@ export function aggregate(c: Cube, f: Filters): Result {
   for (const x of c.nations) { nationName[x.n] = x.nation; regionOf[x.n] = x.region; }
   const seg = f.segment == null ? -1 : c.segments.indexOf(f.segment);
   const pri = f.priority == null ? -1 : c.priorities.indexOf(f.priority);
-  const urgentIdx = c.priorities.indexOf("1-URGENT");
+  const urgentIdx = c.priorities.indexOf("1-Commit");
   const monthly = new Array(c.months.length).fill(0);
   const region: Totals = {}, nation: Totals = {}, segment: Totals = {}, priority: Totals = {};
   const add = (t: Totals, k: string, v: number) => { t[k] = (t[k] || 0) + v; };

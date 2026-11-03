@@ -27,22 +27,29 @@ def test_parity_fixture_is_current():
 
 
 def test_filtered_queries_bind_every_value():
-    f = tpch.Filters(first=3, last=7, region="ASIA", nation=None, segment="BUILDING", priority=None)
+    f = tpch.Filters(first=3, last=7, region="APAC", nation=None, segment="Construction", priority=None)
     p = tpch.params(f)
     for sql in (tpch.TOP_CUSTOMERS_SQL, tpch.SHIP_MODES_SQL):
         assert sql.count("?") == len(p)
     assert p[:2] == [tpch.month_start(3), tpch.month_start(8)]
-    assert "ASIA" not in tpch.TOP_CUSTOMERS_SQL and "BUILDING" not in tpch.SHIP_MODES_SQL
+    assert "ZZ_REGION" not in tpch.TOP_CUSTOMERS_SQL and "ZZ_SEGMENT" not in tpch.SHIP_MODES_SQL   # values are bound, never pasted
+
+
+def test_unset_filters_bind_empty_text_never_none():
+    # the warehouse runtime binds None as the text 'None', which would match no rows
+    p = tpch.params(tpch.Filters())
+    assert None not in p and p[2:] == [""] * 8
+    assert "? = ''" in tpch._FILTERED and "IS NULL" not in tpch._FILTERED
 
 
 def test_month_range_is_complete_months_only():
-    assert tpch.month_label(0) == "1992-01" and tpch.month_label(tpch.MONTHS - 1) == "1998-07"
-    assert tpch.params(tpch.Filters())[1].isoformat() == "1998-08-01"
+    assert tpch.month_label(0) == "2020-01" and tpch.month_label(tpch.MONTHS - 1) == "2026-07"
+    assert tpch.params(tpch.Filters())[1].isoformat() == "2026-08-01"
 
 
 def test_contradictory_filters_match_nothing():
     cube = make_parity_fixture.build()["cube"]
-    r = tpch.aggregate(cube, tpch.Filters(region="EUROPE", nation="NATION_02"))   # NATION_02 is in ASIA
+    r = tpch.aggregate(cube, tpch.Filters(region="AMER", nation="NATION_02"))   # NATION_02 is in EMEA
     assert r["kpi"]["orders"] == 0 and r["kpi"]["aov"] == 0
 
 
@@ -80,7 +87,7 @@ def test_the_app_validator_matches_this_copy():
 
 
 @pytest.mark.parametrize("payload", [
-    {"region": "ASIA' OR '1'='1"}, {"region": ["ASIA"]}, {"nation": {"$ne": None}}, {"segment": "building"},
+    {"region": "APAC' OR '1'='1"}, {"region": ["APAC"]}, {"nation": {"$ne": None}}, {"segment": "construction"},
     {"first": -1}, {"first": "0"}, {"first": 10, "last": 5}, {"last": tpch.MONTHS}, {"priority": 1},
 ])
 def test_hostile_filter_payloads_are_refused(app_filters, payload):
@@ -91,5 +98,5 @@ def test_hostile_filter_payloads_are_refused(app_filters, payload):
 
 def test_valid_filters_pass(app_filters):
     filters, _ = app_filters
-    f = filters({"first": 2, "last": 9, "region": "ASIA", "segment": "BUILDING"})
-    assert f == tpch.Filters(2, 9, "ASIA", None, "BUILDING", None)
+    f = filters({"first": 2, "last": 9, "region": "APAC", "segment": "Construction"})
+    assert f == tpch.Filters(2, 9, "APAC", None, "Construction", None)

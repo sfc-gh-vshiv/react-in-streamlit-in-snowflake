@@ -1,8 +1,8 @@
 # Measurements: React app vs native twin
 
-Two versions of the same dashboard (TPC-H orders: four KPIs, a monthly time series with a
+Two versions of the same dashboard (synthetic pipeline data from the TPC-H sample: four KPIs, a monthly time series with a
 brush, four breakdowns, two drill-downs), measured with one harness under one set of rules.
-Raw data: [`qa/bench-local.json`](../qa/bench-local.json). Harness: [`bench/bench.mjs`](../bench/bench.mjs).
+Raw data: [`qa/bench-pipeline-local.json`](../qa/bench-pipeline-local.json). Harness: [`bench/bench.mjs`](../bench/bench.mjs).
 
 ## Fairness rules
 
@@ -12,7 +12,7 @@ harness treats both apps the same:
 - **Same data, same maths.** Both apps load the same cube with the same SQL (`tpch.py`, one
   file copied byte for byte; a test checks). The React app filters in the browser; the twin
   filters with pandas. Both are checked against one Python reference on a shared fixture, and
-  the harness checks that both show the same KPIs and top customer after every step (4 of 4
+  the harness checks that both show the same KPIs and top account after every step (4 of 4
   steps matched).
 - **Idiomatic twin.** `st.cache_data` for the cube, filtering outside the cache, one
   `st.fragment` for the dashboard, native Altair selections (`on_select="rerun"`) read from
@@ -36,12 +36,12 @@ harness treats both apps the same:
 
 | Interaction | React: charts | Native: charts | Python runs per input, React | Python runs per input, native |
 |---|---:|---:|---:|---:|
-| Click a region bar | **23 ms** | 359 ms | 0 (charts) + 3 (drill-downs) | 1 |
-| Click a segment bar | **14 ms** | 351 ms | 0 + 3 | 1 |
-| Brush 1994-01 to 1996-01 | **8 ms** | 335 ms | 0 + 3 | 1 |
-| Clear all | **18 ms** | 221 ms | 0 | 1 |
+| Click a region bar | **22 ms** | 351 ms | 0 (charts) + 3 (drill-downs) | 1 |
+| Click an industry bar | **12 ms** | 326 ms | 0 + 3 | 1 |
+| Brush 2022-01 to 2024-01 | **8 ms** | 316 ms | 0 + 3 | 1 |
+| Clear all | **13 ms** | 221 ms | 0 | 1 |
 
-Drill-downs: React shows the new top customers and ship modes 1.4 to 1.7 s after the input
+Drill-downs: React shows the new top accounts and lead sources 1.7 to 1.9 s after the input
 (median "settled"), while the charts have long finished. The twin's drill-downs look instant
 in this run because `st.cache_data` is shared by every session in the process and earlier runs
 had warmed it. The React app keeps background results per session on purpose (one viewer's
@@ -49,7 +49,7 @@ results are never served to another), so every fresh session asks Snowflake agai
 answers repeats from its result cache.
 
 Environment: a laptop running both apps locally with `streamlit run`, Streamlit 1.52.2,
-headless Chromium 156 from `playwright-core` 1.64.0, queries on a Medium (Gen2) standard
+headless Chromium from `playwright-core` 1.64.0, queries on a Medium (Gen2) standard
 warehouse. The warehouse affects only the drill-downs: the chart timings involve no query.
 
 ## What these numbers do and don't say
@@ -63,7 +63,7 @@ warehouse. The warehouse affects only the drill-downs: the chart timings involve
   release only commits a range that is already on screen. The twin's selection reaches Python
   when the pointer pauses or is released (Streamlit debounces it; in a separate check, 3 s of
   continuous dragging caused no rerun, and a 600 ms pause caused one), so in this drag, which
-  releases without pausing, its 335 ms starts at the release. The comparison is fair to the
+  releases without pausing, its 316 ms starts at the release. The comparison is fair to the
   input both apps share; it does not credit React for the frames it drew during the drag.
 - **Not measured: hover.** The React app previews a hovered bar's slice across the other
   charts and the KPIs, with no Python involved. The twin has no equivalent (a pointer move

@@ -1,4 +1,9 @@
-"""TPC-H order analytics shared by the React app and its native twin.
+"""Pipeline analytics shared by the React app and its native twin.
+
+The data is synthetic. Every query reads the TPC-H sample data and maps it to a
+sales pipeline in SQL: orders become deals, order priority becomes deal stage,
+and TPC-H regions fold into AMER, EMEA and APAC. Dates move forward 28 years, so
+the data runs from 2020-01 to 2026-07. No customer data is involved.
 
 Both apps carry an identical copy of this file (a test checks), so they run the
 same SQL and define the KPIs the same way. Every query is fixed text; filter
@@ -18,21 +23,33 @@ import json
 from dataclasses import dataclass
 
 DB = "SNOWFLAKE_SAMPLE_DATA.TPCH_SF1"
-START = dt.date(1992, 1, 1)
-MONTHS = 79                                  # 1992-01 .. 1998-07: complete months (the data ends 1998-08-02)
+START = dt.date(2020, 1, 1)
+MONTHS = 79                                  # 2020-01 .. 2026-07: complete months (the data ends 2026-08-02)
+SHIFT_YEARS = 28                             # TPC-H dates run 1992 to 1998
+
+# TPC-H values mapped to pipeline names. The same CASE text is used in every query.
+ORDER_DATE = f"DATEADD(year, {SHIFT_YEARS}, o.O_ORDERDATE)"
+REGION = ("CASE r.R_NAME WHEN 'AMERICA' THEN 'AMER' WHEN 'ASIA' THEN 'APAC' "
+          "WHEN 'EUROPE' THEN 'EMEA' WHEN 'AFRICA' THEN 'EMEA' WHEN 'MIDDLE EAST' THEN 'EMEA' END")
+INDUSTRY = ("CASE c.C_MKTSEGMENT WHEN 'AUTOMOBILE' THEN 'Automotive' WHEN 'BUILDING' THEN 'Construction' "
+            "WHEN 'FURNITURE' THEN 'Retail' WHEN 'HOUSEHOLD' THEN 'Consumer' WHEN 'MACHINERY' THEN 'Industrial' END")
+STAGE = ("CASE o.O_ORDERPRIORITY WHEN '1-URGENT' THEN '1-Commit' WHEN '2-HIGH' THEN '2-Best case' "
+         "WHEN '3-MEDIUM' THEN '3-Pipeline' WHEN '4-NOT SPECIFIED' THEN '4-Upside' WHEN '5-LOW' THEN '5-Early' END")
+LEAD_SOURCE = ("CASE l.L_SHIPMODE WHEN 'AIR' THEN 'Web' WHEN 'REG AIR' THEN 'Paid search' WHEN 'FOB' THEN 'Partner' "
+               "WHEN 'MAIL' THEN 'Email' WHEN 'RAIL' THEN 'Events' WHEN 'SHIP' THEN 'Referral' WHEN 'TRUCK' THEN 'Outbound' END")
 
 CUBE_SQL = f"""
-SELECT DATEDIFF(month, '1992-01-01'::DATE, DATE_TRUNC(month, o.O_ORDERDATE)) AS M,
-       c.C_NATIONKEY AS N, c.C_MKTSEGMENT AS SEG, o.O_ORDERPRIORITY AS PRI,
+SELECT DATEDIFF(month, '2020-01-01'::DATE, DATE_TRUNC(month, {ORDER_DATE})) AS M,
+       c.C_NATIONKEY AS N, {INDUSTRY} AS SEG, {STAGE} AS PRI,
        COUNT(*) AS ORDERS, ROUND(SUM(o.O_TOTALPRICE)) AS REVENUE
 FROM {DB}.ORDERS o
 JOIN {DB}.CUSTOMER c ON c.C_CUSTKEY = o.O_CUSTKEY
-WHERE o.O_ORDERDATE < '1998-08-01'::DATE
+WHERE {ORDER_DATE} < '2026-08-01'::DATE
 GROUP BY 1, 2, 3, 4
 """
 
 NATIONS_SQL = f"""
-SELECT n.N_NATIONKEY AS N, n.N_NAME AS NATION, r.R_NAME AS REGION
+SELECT n.N_NATIONKEY AS N, n.N_NAME AS NATION, {REGION} AS REGION
 FROM {DB}.NATION n JOIN {DB}.REGION r ON r.R_REGIONKEY = n.N_REGIONKEY
 ORDER BY n.N_NATIONKEY
 """
@@ -41,27 +58,27 @@ _FILTERED = f"""
 JOIN {DB}.CUSTOMER c ON c.C_CUSTKEY = o.O_CUSTKEY
 JOIN {DB}.NATION n ON n.N_NATIONKEY = c.C_NATIONKEY
 JOIN {DB}.REGION r ON r.R_REGIONKEY = n.N_REGIONKEY
-WHERE o.O_ORDERDATE >= ? AND o.O_ORDERDATE < ?
-  AND (? IS NULL OR r.R_NAME = ?)
-  AND (? IS NULL OR n.N_NAME = ?)
-  AND (? IS NULL OR c.C_MKTSEGMENT = ?)
-  AND (? IS NULL OR o.O_ORDERPRIORITY = ?)
+WHERE {ORDER_DATE} >= ? AND {ORDER_DATE} < ?
+  AND (? = '' OR {REGION} = ?)
+  AND (? = '' OR n.N_NAME = ?)
+  AND (? = '' OR {INDUSTRY} = ?)
+  AND (? = '' OR {STAGE} = ?)
 """
 
 TOP_CUSTOMERS_SQL = f"""
-SELECT c.C_NAME AS CUSTOMER, n.N_NAME AS NATION, c.C_MKTSEGMENT AS SEGMENT,
-       COUNT(*) AS ORDERS, ROUND(SUM(o.O_TOTALPRICE)) AS REVENUE
+SELECT REPLACE(c.C_NAME, 'Customer#', 'Account ') AS ACCOUNT, n.N_NAME AS COUNTRY, {INDUSTRY} AS INDUSTRY,
+       COUNT(*) AS DEALS, ROUND(SUM(o.O_TOTALPRICE)) AS BOOKINGS
 FROM {DB}.ORDERS o
 {_FILTERED}
 GROUP BY 1, 2, 3
-ORDER BY REVENUE DESC, CUSTOMER
+ORDER BY BOOKINGS DESC, ACCOUNT
 LIMIT 20
 """
 
 SHIP_MODES_SQL = f"""
-SELECT l.L_SHIPMODE AS SHIP_MODE, COUNT(*) AS LINES,
-       ROUND(SUM(l.L_EXTENDEDPRICE * (1 - l.L_DISCOUNT))) AS REVENUE,
-       ROUND(100 * AVG(IFF(l.L_RECEIPTDATE > l.L_COMMITDATE, 1, 0)), 1) AS LATE_PCT
+SELECT {LEAD_SOURCE} AS LEAD_SOURCE, COUNT(*) AS LINES,
+       ROUND(SUM(l.L_EXTENDEDPRICE * (1 - l.L_DISCOUNT))) AS BOOKINGS,
+       ROUND(100 * AVG(IFF(l.L_RECEIPTDATE > l.L_COMMITDATE, 1, 0)), 1) AS SLIPPED_PCT
 FROM {DB}.LINEITEM l
 JOIN {DB}.ORDERS o ON o.O_ORDERKEY = l.L_ORDERKEY
 {_FILTERED}
@@ -89,9 +106,10 @@ def month_label(i: int) -> str:
 
 
 def params(f: Filters) -> list:
-    """Bind values for the filtered queries, in placeholder order."""
-    return [month_start(f.first), month_start(f.last + 1),
-            f.region, f.region, f.nation, f.nation, f.segment, f.segment, f.priority, f.priority]
+    """Bind values for the filtered queries, in placeholder order. An unset filter binds as an
+    empty string: the warehouse runtime binds None as the text 'None', which matches nothing."""
+    r, n, s, p = f.region or "", f.nation or "", f.segment or "", f.priority or ""
+    return [month_start(f.first), month_start(f.last + 1), r, r, n, n, s, s, p, p]
 
 
 def load_cube(session) -> dict:
@@ -126,7 +144,7 @@ def aggregate(cube: dict, f: Filters) -> dict:
     nation_name = {n["n"]: n["nation"] for n in cube["nations"]}
     region_of = {n["n"]: n["region"] for n in cube["nations"]}
     seg, pri = cube["segments"], cube["priorities"]
-    kpi = {"orders": 0, "revenue": 0, "urgent": 0}
+    kpi = {"orders": 0, "revenue": 0, "urgent": 0}   # deals, bookings, deals at the Commit stage
     monthly = [0] * MONTHS
     by = {"region": {}, "nation": {}, "segment": {}, "priority": {}}
     for m, n, s, p, o, r in zip(cube["m"], cube["n"], cube["s"], cube["p"], cube["o"], cube["r"]):
@@ -148,7 +166,7 @@ def aggregate(cube: dict, f: Filters) -> dict:
         if ok_m and ok_r and ok_n and ok_s and ok_p:
             kpi["orders"] += o
             kpi["revenue"] += r
-            if pri[p] == "1-URGENT":
+            if pri[p] == "1-Commit":
                 kpi["urgent"] += o
     kpi["aov"] = kpi["revenue"] / kpi["orders"] if kpi["orders"] else 0
     kpi["urgent_pct"] = 100 * kpi["urgent"] / kpi["orders"] if kpi["orders"] else 0
